@@ -1,0 +1,150 @@
+#!/bin/bash
+## Semi-automatic script to
+## download build and install
+## ffmpeg-full on arch linux
+## Req. grep hash head tail wc git make gcc... /proc/cpuinfo
+## Use: ./get_ffmpeg-full_arch
+## Author Andrew S.
+## Licence GPL
+## https://github.com/quarkscript/Video-transcode.git
+
+mcolif() {
+echo file $1
+lnl=$(grep -n "$2" "$1" | grep "$3" | sed -e 's/:.*//g')
+echo $lnl
+    for l_n in $lnl; do
+        head -n $(($l_n-1)) $1 >$1.tmp
+        head -n $(($l_n)) $1 >wrk.tmp
+        tail -n 1 wrk.tmp | sed -e "s/$3/$4/g" >>$1.tmp
+        tail -n +$(($l_n+1)) $1 >>$1.tmp
+        rm -f $1 wrk.tmp
+        cp -f $1.tmp $1
+        rm -f $1.tmp
+        echo line No $l_n was processed
+    done
+}
+
+components=(
+            'https://aur.archlinux.org/rockchip-mpp.git
+             https://aur.archlinux.org/libmysofa-git.git
+             https://aur.archlinux.org/xavs.git
+             https://aur.archlinux.org/vo-amrwbenc.git
+             https://aur.archlinux.org/shine.git
+             https://aur.archlinux.org/sndio.git
+             https://aur.archlinux.org/libopenmpt-svn.git
+             https://aur.archlinux.org/openh264.git
+             https://aur.archlinux.org/kvazaar.git
+             https://aur.archlinux.org/libilbc.git
+             https://aur.archlinux.org/flite1.git
+             https://aur.archlinux.org/libbs2b.git
+             https://aur.archlinux.org/chromaprint-fftw.git
+             https://aur.archlinux.org/blackmagic-decklink-sdk.git
+             https://aur.archlinux.org/libvmaf.git
+             https://aur.archlinux.org/libmfx.git
+             https://aur.archlinux.org/ffmpeg-full.git'
+            )
+                
+## download sources 
+for i in $(echo $components )
+    do
+    git clone $i
+done
+
+## get req packs
+for i in $(ls -d */ | sed -e 's/\///g' | sed -e 's/ffmpeg-full//g' )
+    do
+    cd $i
+    req_pack_list+=" "$(cat PKGBUILD | grep "depends=" | sed -e 's/)//g' | sed -e "s/'//g" | sed -e 's/makedepends=(//g' | sed -e 's/depends=(//g')
+    cd ..
+done
+
+## chek ffmpeg-full req
+cd ffmpeg-full
+rm -f 1.tmp
+for k in $(grep -n '# of' PKGBUILD | grep -o -E "[0-9][0-9]")
+    do
+    for m in $(grep -n '# AUR' PKGBUILD | grep -o -E "[0-9][0-9]")
+        do
+        if [ "$k" -lt "$m" ]
+            then
+            head -n $(($m-1)) PKGBUILD >tst.tmp
+            tail -n $(($m-$k-1)) tst.tmp >>1.tmp
+            rm -f tst.tmp
+            break
+        fi
+    done
+done
+ffmpegfullreq=$(cat 1.tmp | sed -e "s/'//g")
+rm -f 1.tmp
+cd ..
+req_pack_list+=" "$(echo $ffmpegfullreq)
+
+## rm duplicates
+tr=""
+for i in $req_pack_list
+    do
+    if ! $(echo $tr | grep "$i" -q)
+        then
+        tr+=" "$i
+    fi
+done
+req_pack_list=$tr
+tr=""
+
+## test req packages
+installed_list=$(pacman -Qq)
+for i in $req_pack_list
+    do
+    tr+=" "$(echo $i | grep -v "$installed_list" )
+done
+
+## try to install required packs
+if [ ! "$tr"==" " ]
+    then
+    echo !!!
+    echo super-user password required for install components
+    sudo pacman -S $tr
+fi
+
+## 2nd test req packages
+tr=""
+installed_list=$(pacman -Qq)
+for i in $req_pack_list
+    do
+    tr+=" "$(echo $i | grep -v "$installed_list" )
+done
+
+if [ "$tr"==" " ]
+    then 
+## force to use smp while making        
+        for i in $(ls -d */ | sed -e 's/\///g' | grep -v "flite1")
+            do
+            cd $i
+            mcolif 'PKGBUILD' ' make' ' make' " make -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
+            cd ..
+        done
+        
+## make components
+        for i in $(ls -d */ | sed -e 's/\///g' | grep -v "ffmpeg-full")
+            do
+            cd $i
+            makepkg
+            cp *pkg.tar.xz ../
+            cd ..
+        done
+        echo !!!
+        echo super-user password required for install components
+        sudo pacman -U *pkg.tar.xz
+        echo
+        cd ffmpeg-full
+        makepkg
+        echo !!!
+        echo super-user password is required for install ffmpeg-full
+        sudo pacman -U *pkg.tar.xz
+else
+    echo required components: $tr
+    echo
+    echo not found
+    echo continue not possible, exit
+fi
+
