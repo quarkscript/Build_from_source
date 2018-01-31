@@ -1,6 +1,6 @@
 #!/bin/bash
 ## Transcoding mkv, webm, flv, ts, avi to format (mp4) compatible with my TV
-## H264 =<30fps =<1920x1080 + aac dynamic compression and normalization
+## H264 =<30fps =<1920x1080 + aac dynamic compressed and normalized
 ## Req: bash, hash, grep, head, tail, wc, mediainfo, ffmpeg (ffmpeg-full for hw encoders)
 ## Use: ./videotranscode
 ## Author Andrew S.
