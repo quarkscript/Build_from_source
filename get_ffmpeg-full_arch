@@ -39,10 +39,11 @@ components=(
              https://aur.archlinux.org/libbs2b.git
              https://aur.archlinux.org/chromaprint-fftw.git
              https://aur.archlinux.org/blackmagic-decklink-sdk.git
-             https://aur.archlinux.org/libvmaf.git
              https://aur.archlinux.org/libmfx.git
-             https://aur.archlinux.org/ffmpeg-full.git'
+             https://aur.archlinux.org/ffmpeg-full.git
+             https://aur.archlinux.org/vmaf.git'
             )
+            #https://aur.archlinux.org/libvmaf.git
                 
 ## download sources 
 for i in $(echo $components )
