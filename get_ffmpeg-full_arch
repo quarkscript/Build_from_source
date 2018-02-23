@@ -2,27 +2,20 @@
 ## Semi-automatic script to
 ## download build and install
 ## ffmpeg-full on arch linux
-## Req. grep hash head tail wc git make gcc... /proc/cpuinfo
+## Req.: grep hash head tail wc git wget make gcc... /proc/cpuinfo
 ## Use: ./get_ffmpeg-full_arch
 ## Author Andrew S.
 ## Licence GPL
 ## https://github.com/quarkscript/Video-transcode.git
 
-mcolif() {
-echo file $1
-lnl=$(grep -n "$2" "$1" | grep "$3" | sed -e 's/:.*//g')
-echo $lnl
-    for l_n in $lnl; do
-        head -n $(($l_n-1)) $1 >$1.tmp
-        head -n $(($l_n)) $1 >wrk.tmp
-        tail -n 1 wrk.tmp | sed -e "s/$3/$4/g" >>$1.tmp
-        tail -n +$(($l_n+1)) $1 >>$1.tmp
-        rm -f $1 wrk.tmp
-        cp -f $1.tmp $1
-        rm -f $1.tmp
-        echo line No $l_n was processed
-    done
-}
+## do you want a hardware depend optimizations builds?
+hwdep=no
+
+## get required Simple_func_scripts
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/cxx_flags
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mcolif
+chmod +x adnlalwp cxx_flags mcolif
 
 components=(
             'https://aur.archlinux.org/rockchip-mpp.git
@@ -100,28 +93,61 @@ for i in $req_pack_list
 done
 
 ## try to install required packs
-if [ ! "$tr"==" " ]
+if [ "$tr" != " " ]
     then
     echo !!!
-    echo super-user password required for install components
+    echo due to reorganize arch repo and not synced ffmpeg-full 
+    echo dependencies with it, some of packs may reinstall
+    echo !!!
+    echo super-user password required for install $tr
     sudo pacman -S $tr
 fi
 
-## 2nd test req packages
-tr=""
-installed_list=$(pacman -Qq)
-for i in $req_pack_list
-    do
-    tr+=" "$(echo $i | grep -v "$installed_list" )
-done
+## due to reorganize arch repo some of packs name was changed and 2nd test can leads to fail
+tr=" "
+# ## 2nd test req packages
+# tr=""
+# installed_list=$(pacman -Qq)
+# for i in $req_pack_list
+#     do
+#     tr+=" "$(echo $i | grep -v "$installed_list" )
+# done
 
-if [ "$tr"==" " ]
-    then 
+if [ "$tr" = " " ]
+    then
+    
+## mod pkgbuild files for hw depend builds
+    if [ "$hwdep" = "yes" ]
+        then
+            for i in $(ls -d */ | sed -e 's/\///g') #| grep -v "libmysofa-git" | grep -v "libilbc" | grep -v "chromaprint-fftw") #| grep -v "ffmpeg-full")
+                do
+                cp cxx_flags $i/cxx_flags
+                cd $i
+                echo ------
+                echo $i
+                ../adnlalwp 'PKGBUILD' 'source=' "'cxx_flags'"
+                ../adnlalwp 'PKGBUILD' 'sums=' "'SKIP'"
+                if [ $(grep -n 'source=' PKGBUILD | grep ")") ]
+                    then
+                    ../mcolif 'PKGBUILD' 'source=' ')' ''
+                    ../adnlalwp 'PKGBUILD' 'cxx_flags' ')'
+                fi
+                if [ $(grep -n 'sums=' PKGBUILD | grep ")") ]
+                    then
+                    ../mcolif 'PKGBUILD' 'sums=' ')' ''
+                    ../adnlalwp 'PKGBUILD' "'SKIP'" ')' 'sums='
+                fi
+                ../adnlalwp 'PKGBUILD' 'build()' 'export CXXFLAGS+=$(cat cxxflags.txt)'
+                ../adnlalwp 'PKGBUILD' 'build()' './cxx_flags'
+                cd ..
+            done
+        fi
+        
 ## force to use smp while making        
         for i in $(ls -d */ | sed -e 's/\///g' | grep -v "flite1")
             do
             cd $i
-            mcolif 'PKGBUILD' ' make' ' make' " make -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
+            ../mcolif 'PKGBUILD' ' make' ' make' " make -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
             cd ..
         done
         
@@ -148,4 +174,4 @@ else
     echo not found
     echo continue not possible, exit
 fi
-
+ 
