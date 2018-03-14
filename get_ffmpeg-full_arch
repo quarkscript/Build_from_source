@@ -28,7 +28,7 @@ components=(
              https://aur.archlinux.org/openh264.git
              https://aur.archlinux.org/kvazaar.git
              https://aur.archlinux.org/libilbc.git
-             https://aur.archlinux.org/flite1.git
+             https://aur.archlinux.org/flite1-patched.git
              https://aur.archlinux.org/libbs2b.git
              https://aur.archlinux.org/chromaprint-fftw.git
              https://aur.archlinux.org/blackmagic-decklink-sdk.git
@@ -36,6 +36,7 @@ components=(
              https://aur.archlinux.org/ffmpeg-full.git
              https://aur.archlinux.org/vmaf.git'
             )
+            #https://aur.archlinux.org/flite1.git
             #https://aur.archlinux.org/libvmaf.git
                 
 ## download sources 
