@@ -2,23 +2,28 @@
 ## Semi-automatic script to
 ## download build and install
 ## ffmpeg-full on arch linux
-## Req.: grep hash head tail wc git wget make gcc... /proc/cpuinfo
+## Req.: grep hash head tail wc git wget make gcc...
 ## Use: ./get_ffmpeg-full_arch
 ## Author Andrew S.
 ## Licence GPL
 ## https://github.com/quarkscript/Video-transcode.git
 
-## do you want a hardware depend optimizations builds?
-hwdep=no
-
 ## get required Simple_func_scripts
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/cxx_flags
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mcolif
-chmod +x adnlalwp cxx_flags mcolif
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mpbsmpks
+chmod +x adnlalwp cxx_flags mcolif mpbsmpks
+./cxx_flags
 
-components=(
-            'https://aur.archlinux.org/rockchip-mpp.git
+## For make a local hardware independent builds uncomment next line
+#echo "">cxxflags.txt
+
+mkdir aur_depends
+cp adnlalwp cxx_flags mcolif mpbsmpks cxxflags.txt aur_depends
+cp aur_depends ffmpeg -r
+cd aur_depends
+ aur_ffdep=('https://aur.archlinux.org/rockchip-mpp.git
              https://aur.archlinux.org/libmysofa-git.git
              https://aur.archlinux.org/xavs.git
              https://aur.archlinux.org/vo-amrwbenc.git
@@ -33,14 +38,8 @@ components=(
              https://aur.archlinux.org/chromaprint-fftw.git
              https://aur.archlinux.org/blackmagic-decklink-sdk.git
              https://aur.archlinux.org/libmfx.git
-             https://aur.archlinux.org/ffmpeg-full.git
-             https://aur.archlinux.org/vmaf.git'
-            )
-            #https://aur.archlinux.org/flite1.git
-            #https://aur.archlinux.org/libvmaf.git
-                
-## download sources 
-for i in $(echo $components )
+             https://aur.archlinux.org/vmaf.git')
+for i in $(echo $aur_ffdep )
     do
     git clone $i
 done
@@ -53,9 +52,11 @@ for i in $(ls -d */ | sed -e 's/\///g' | sed -e 's/ffmpeg-full//g' )
     cd ..
 done
 
-## chek ffmpeg-full req
+cd ../ffmpeg
+git clone https://aur.archlinux.org/ffmpeg-full.git
 cd ffmpeg-full
-rm -f 1.tmp
+
+## get additional ffmpeg dependencies
 for k in $(grep -n '# of' PKGBUILD | grep -o -E "[0-9][0-9]")
     do
     for m in $(grep -n '# AUR' PKGBUILD | grep -o -E "[0-9][0-9]")
@@ -71,7 +72,7 @@ for k in $(grep -n '# of' PKGBUILD | grep -o -E "[0-9][0-9]")
 done
 ffmpegfullreq=$(cat 1.tmp | sed -e "s/'//g")
 rm -f 1.tmp
-cd ..
+cd ../..
 req_pack_list+=" "$(echo $ffmpegfullreq)
 
 ## rm duplicates
@@ -86,93 +87,34 @@ done
 req_pack_list=$tr
 tr=""
 
-## test req packages
+## install available packages
 installed_list=$(pacman -Qq)
 for i in $req_pack_list
     do
     tr+=" "$(echo $i | grep -v "$installed_list" )
 done
-
-## try to install required packs
 if [ "$tr" != " " ]
     then
     echo !!!
     echo due to reorganize arch repo and not synced ffmpeg-full 
-    echo dependencies with it, some of packs may reinstall
+    echo dependencies with it, some of packages may reinstall
     echo !!!
     echo super-user password required for install $tr
     sudo pacman -S $tr
 fi
 
-## due to reorganize arch repo some of packs name was changed and 2nd test can leads to fail
-tr=" "
-# ## 2nd test req packages
-# tr=""
-# installed_list=$(pacman -Qq)
-# for i in $req_pack_list
-#     do
-#     tr+=" "$(echo $i | grep -v "$installed_list" )
-# done
+## make and install req. aur packages
+cd aur_depends
+./mpbsmpks
+echo !!!
+echo super-user password required for install ffmpeg aur depends
+sudo pacman -U *pkg.tar.xz
+echo
+cd ..
 
-if [ "$tr" = " " ]
-    then
-    
-## mod pkgbuild files for hw depend builds
-    if [ "$hwdep" = "yes" ]
-        then
-            for i in $(ls -d */ | sed -e 's/\///g') #| grep -v "libmysofa-git" | grep -v "libilbc" | grep -v "chromaprint-fftw") #| grep -v "ffmpeg-full")
-                do
-                cp cxx_flags $i/cxx_flags
-                cd $i
-                echo ------
-                echo $i
-                ../adnlalwp 'PKGBUILD' 'source=' "'cxx_flags'"
-                ../adnlalwp 'PKGBUILD' 'sums=' "'SKIP'"
-                if [ $(grep -n 'source=' PKGBUILD | grep ")") ]
-                    then
-                    ../mcolif 'PKGBUILD' 'source=' ')' ''
-                    ../adnlalwp 'PKGBUILD' 'cxx_flags' ')'
-                fi
-                if [ $(grep -n 'sums=' PKGBUILD | grep ")") ]
-                    then
-                    ../mcolif 'PKGBUILD' 'sums=' ')' ''
-                    ../adnlalwp 'PKGBUILD' "'SKIP'" ')' 'sums='
-                fi
-                ../adnlalwp 'PKGBUILD' 'build()' 'export CXXFLAGS+=$(cat cxxflags.txt)'
-                ../adnlalwp 'PKGBUILD' 'build()' './cxx_flags'
-                cd ..
-            done
-        fi
-        
-## force to use smp while making        
-        for i in $(ls -d */ | sed -e 's/\///g' | grep -v "flite1")
-            do
-            cd $i
-            ../mcolif 'PKGBUILD' ' make' ' make' " make -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
-            cd ..
-        done
-        
-## make components
-        for i in $(ls -d */ | sed -e 's/\///g' | grep -v "ffmpeg-full")
-            do
-            cd $i
-            makepkg
-            cp *pkg.tar.xz ../
-            cd ..
-        done
-        echo !!!
-        echo super-user password required for install components
-        sudo pacman -U *pkg.tar.xz
-        echo
-        cd ffmpeg-full
-        makepkg
-        echo !!!
-        echo super-user password is required for install ffmpeg-full
-        sudo pacman -U *pkg.tar.xz
-else
-    echo required components: $tr
-    echo
-    echo not found
-    echo continue not possible, exit
-fi
- 
+## make and install ffmpeg-full
+cd ffmpeg
+./mpbsmpks
+echo !!!
+echo super-user password is required for install ffmpeg-full
+sudo pacman -U *pkg.tar.xz
