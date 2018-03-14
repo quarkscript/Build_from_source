@@ -93,15 +93,15 @@ for i in $req_pack_list
     do
     tr+=" "$(echo $i | grep -v "$installed_list" )
 done
-if [ "$tr" != " " ]
-    then
+#if [ "$tr" != " " ]
+#    then
     echo !!!
     echo due to reorganize arch repo and not synced ffmpeg-full 
     echo dependencies with it, some of packages may reinstall
     echo !!!
     echo super-user password required for install $tr
     sudo pacman -S $tr
-fi
+#fi
 
 ## make and install req. aur packages
 cd aur_depends
