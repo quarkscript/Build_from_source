@@ -87,7 +87,7 @@ done
 req_pack_list=$tr
 tr=""
 
-## install available packages
+## test req packages
 installed_list=$(pacman -Qq)
 for i in $req_pack_list
     do
