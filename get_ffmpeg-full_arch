@@ -114,6 +114,12 @@ cd ..
 
 ## make and install ffmpeg-full
 cd ffmpeg
+extrafl='--extra-cxxflags=" '
+extrafl+=$(cat cxxflags.txt)
+extrafl+=' " \'
+cd ffmpeg-full
+../adnlalwp 'PKGBUILD' 'prefix=' "$extrafl" 
+ cd ..
 ./mpbsmpks
 echo !!!
 echo super-user password is required for install ffmpeg-full
