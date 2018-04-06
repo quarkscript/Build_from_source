@@ -6,7 +6,7 @@
 ## Use: ./get_ffmpeg-full_arch
 ## Author Andrew S.
 ## Licence GPL
-## https://github.com/quarkscript/Video-transcode.git
+## https://github.com/quarkscript/Build_from_source
 
 ## get required Simple_func_scripts
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
