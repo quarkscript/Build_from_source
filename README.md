@@ -1,5 +1,4 @@
-# Video-transcode
-
-videotranscode - Transcoding mkv, webm, flv, ts, avi to format (mp4) compatible with my TV
+# Build from Source
+Some Arch Linux bash scripts to make custom binary from source code
 
 get_ffmpeg-full_arch - Semi-automatic script to download build and install ffmpeg-full (with support hw encoders) on arch linux 
