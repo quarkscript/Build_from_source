@@ -6,21 +6,23 @@
 ## Use: ./get_ffmpeg-full_arch
 ## Author Andrew S.
 ## Licence GPL
-## https://github.com/quarkscript/Build_from_source
+## https://github.com/quarkscript/Video-transcode.git
 
 ## get required Simple_func_scripts
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/cxx_flags
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mcolif
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mpbsmpks
-chmod +x adnlalwp cxx_flags mcolif mpbsmpks
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/edfpb
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/rmdtpi
+chmod +x adnlalwp cxx_flags mcolif mpbsmpks rmdtpi edfpb
 ./cxx_flags
 
 ## For make a local hardware independent builds uncomment next line
 #echo "">cxxflags.txt
 
 mkdir aur_depends
-cp adnlalwp cxx_flags mcolif mpbsmpks cxxflags.txt aur_depends
+cp adnlalwp cxx_flags mcolif mpbsmpks cxxflags.txt rmdtpi edfpb aur_depends
 cp aur_depends ffmpeg -r
 cd aur_depends
  aur_ffdep=('https://aur.archlinux.org/rockchip-mpp.git
@@ -43,74 +45,63 @@ for i in $(echo $aur_ffdep )
     do
     git clone $i
 done
-
-## get req packs
-for i in $(ls -d */ | sed -e 's/\///g' | sed -e 's/ffmpeg-full//g' )
+echo "">deps1
+echo "">deps2
+for i in $(ls -d */ | sed -e 's/\///g')
     do
-    cd $i
-    req_pack_list+=" "$(cat PKGBUILD | grep "depends=" | sed -e 's/)//g' | sed -e "s/'//g" | sed -e 's/makedepends=(//g' | sed -e 's/depends=(//g')
-    cd ..
+    ./edfpb "$i/PKGBUILD"
+    cat deps2 >>deps1
+    cat deps1 >>aur_dep_list
 done
+## get aur req packs
+./rmdtpi "aur_dep_list"
+ req_pack_list=$(cat aur_dep_list.req)
+if [ "$req_pack_list" != "" ]
+    then
+        echo !!!
+        echo build aur depends of ffmpeg-full require absent packages:
+        echo $req_pack_list
+        echo !!! super-user password is required to install it
+        sudo pacman -S $req_pack_list
+fi
+
+## make and install req. aur packages
+./mpbsmpks
+echo !!!
+echo !!! super-user password is required to install aur depends of ffmpeg-full
+sudo pacman -U *pkg.tar.xz
 
 cd ../ffmpeg
 git clone https://aur.archlinux.org/ffmpeg-full.git
-cd ffmpeg-full
-
-## get additional ffmpeg dependencies
-for k in $(grep -n '# of' PKGBUILD | grep -o -E "[0-9][0-9]")
-    do
-    for m in $(grep -n '# AUR' PKGBUILD | grep -o -E "[0-9][0-9]")
-        do
-        if [ "$k" -lt "$m" ]
-            then
-            head -n $(($m-1)) PKGBUILD >tst.tmp
-            tail -n $(($m-$k-1)) tst.tmp >>1.tmp
-            rm -f tst.tmp
-            break
-        fi
-    done
-done
-ffmpegfullreq=$(cat 1.tmp | sed -e "s/'//g")
-rm -f 1.tmp
-cd ../..
-req_pack_list+=" "$(echo $ffmpegfullreq)
-
-## rm duplicates
-tr=""
-for i in $req_pack_list
-    do
-    if ! $(echo $tr | grep "$i" -q)
-        then
-        tr+=" "$i
-    fi
-done
-req_pack_list=$tr
-tr=""
-
-## test req packages
-installed_list=$(pacman -Qq)
-for i in $req_pack_list
-    do
-    tr+=" "$(echo $i | grep -v "$installed_list" )
-done
-#if [ "$tr" != " " ]
-#    then
-    echo !!!
-    echo due to reorganize arch repo and not synced ffmpeg-full 
-    echo dependencies with it, some of packages may reinstall
-    echo !!!
-    echo super-user password required for install $tr
-    sudo pacman -S $tr
-#fi
-
-## make and install req. aur packages
-cd aur_depends
-./mpbsmpks
-echo !!!
-echo super-user password required for install ffmpeg aur depends
-sudo pacman -U *pkg.tar.xz
-echo
-cd ..
+echo "">deps1
+echo "">deps2
+./edfpb "ffmpeg-full/PKGBUILD"
+cat deps2 >>deps1
+cat deps1 >>ffmpeg_full_req
+./edfpb "ffmpeg-full/PKGBUILD" "depends_x86_64=('"
+cat deps2 >>deps1
+cat deps1 >>ffmpeg_full_req
+./edfpb "ffmpeg-full/PKGBUILD" "makedepends_x86_64="
+cat deps2 >>deps1
+cat deps1 >>ffmpeg_full_req
+# ## for intel qsv....
+# ./edfpb "ffmpeg-full/PKGBUILD" "optdepends_x86_64="
+# cat deps2 >>deps1
+# cat deps1 >>ffmpeg_full_req
+./rmdtpi "ffmpeg_full_req"
+req_pack_list_ffmpeg=$(cat ffmpeg_full_req.req)
+if [ "$req_pack_list_ffmpeg" != "" ]
+    then
+        echo !!!
+        echo build ffmpeg-full require absent packages:
+        echo $req_pack_list_ffmpeg
+        echo !!!
+        echo due to reorganize arch repo and not synced ffmpeg-full 
+        echo dependencies with it, some of packages may reinstall
+        echo !!!
+        echo !!! super-user password is required to install it
+        sudo pacman -S $req_pack_list_ffmpeg
+fi
 
 ## make and install ffmpeg-full
 cd ffmpeg
