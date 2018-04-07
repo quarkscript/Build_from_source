@@ -1,0 +1,38 @@
+#!/bin/bash
+## Semi-automatic script to
+## download build and install
+## vlc on arch linux
+## Req.: grep hash head tail wc git wget make gcc...
+## Use: ./get_last_vlc_arch
+## Author Andrew S.
+## License GPL
+## https://github.com/quarkscript/Build_from_source
+
+## get required Simple_func_scripts
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/cxx_flags
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mcolif
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mpbsmpks
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/edfpb
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/rmdtpi
+chmod +x adnlalwp cxx_flags mcolif mpbsmpks rmdtpi edfpb
+./cxx_flags
+
+## For make a local hardware independent builds uncomment next line
+#echo "">cxxflags.txt
+
+git clone https://aur.archlinux.org/vlc-git.git
+./edfpb "vlc-git/PKGBUILD"
+cat deps2 >>deps1
+./rmdtpi "deps1"
+req_pacs_list=$(cat deps1.req)
+if [ "$req_pacs_list" != "" ]
+    then
+        echo build of vlc required absent packages:
+        echo $req_pacs_list
+        echo !!! super-user password is required to install it
+        sudo pacman -S $req_pacs_list
+fi
+./mpbsmpks
+echo !!! super-user password is required to install vlc
+sudo pacman -U *pkg.tar.xz
