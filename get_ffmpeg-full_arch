@@ -26,7 +26,7 @@ cp adnlalwp cxx_flags mcolif mpbsmpks cxxflags.txt rmdtpi edfpb aur_depends
 cp aur_depends ffmpeg -r
 cd aur_depends
  aur_ffdep=('https://aur.archlinux.org/rockchip-mpp.git
-             https://aur.archlinux.org/libmysofa-git.git
+             https://aur.archlinux.org/libmysofa.git
              https://aur.archlinux.org/xavs.git
              https://aur.archlinux.org/vo-amrwbenc.git
              https://aur.archlinux.org/shine.git
