@@ -1,0 +1,41 @@
+#!/bin/bash
+## Semi-automatic script to
+## download build and install
+## mpc-qt on arch linux
+## Req.: grep hash head tail wc git wget make gcc...
+## Use: ./get_mpc-qt_arch
+## Author Andrew S.
+## License GPL
+## https://github.com/quarkscript/
+
+## get required Simple_func_scripts
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/cxx_flags
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mcolif
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mpbsmpks
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/rmdtpi
+wget https://github.com/quarkscript/Simple_func_scripts/raw/master/edfpb
+chmod +x adnlalwp cxx_flags mcolif mpbsmpks rmdtpi edfpb
+./cxx_flags
+extrafl=$(cat cxxflags.txt)
+## For make a local hardware independent builds uncomment next line
+#extrafl=""
+
+git clone https://aur.archlinux.org/mpc-qt.git
+./edfpb "mpc-qt/PKGBUILD"
+cat deps2 >>deps1
+./rmdtpi "deps1"
+req_pacs_list=$(cat deps1.req)
+if [ "$req_pacs_list" != "" ]
+    then
+        echo build of mpc-qt required absent packages:
+        echo $req_pacs_list
+        echo !!! super-user password is required to install it
+        sudo pacman -S $req_pacs_list
+fi
+cd mpc-qt
+../adnlalwp 'PKGBUILD' 'qmake-qt5' "../../../mcolif "Makefile" 'O2' 'O2' 'O2 $extrafl' " 
+ cd ..
+./mpbsmpks
+echo !!! super-user password is required to install mpc-qt
+sudo pacman -U *pkg.tar.xz
