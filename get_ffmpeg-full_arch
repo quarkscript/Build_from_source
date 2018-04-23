@@ -6,7 +6,7 @@
 ## Use: ./get_ffmpeg-full_arch
 ## Author Andrew S.
 ## Licence GPL
-## https://github.com/quarkscript/Build_from_source.git
+## https://github.com/quarkscript/Video-transcode.git
 
 ## get required Simple_func_scripts
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
@@ -25,7 +25,8 @@ mkdir aur_depends
 cp adnlalwp cxx_flags mcolif mpbsmpks cxxflags.txt rmdtpi edfpb aur_depends
 cp aur_depends ffmpeg -r
 cd aur_depends
- aur_ffdep=('https://aur.archlinux.org/rockchip-mpp.git
+ aur_ffdep=('
+             https://aur.archlinux.org/rockchip-mpp.git
              https://aur.archlinux.org/libmysofa.git
              https://aur.archlinux.org/xavs.git
              https://aur.archlinux.org/vo-amrwbenc.git
@@ -40,7 +41,9 @@ cd aur_depends
              https://aur.archlinux.org/chromaprint-fftw.git
              https://aur.archlinux.org/blackmagic-decklink-sdk.git
              https://aur.archlinux.org/libmfx.git
-             https://aur.archlinux.org/vmaf.git')
+             https://aur.archlinux.org/vmaf.git
+             https://aur.archlinux.org/intel-media-driver.git
+             https://aur.archlinux.org/intel-media-sdk.git')
 for i in $(echo $aur_ffdep )
     do
     git clone $i
@@ -53,9 +56,10 @@ for i in $(ls -d */ | sed -e 's/\///g')
     cat deps2 >>deps1
     cat deps1 >>aur_dep_list
 done
+
 ## get aur req packs
 ./rmdtpi "aur_dep_list"
- req_pack_list=$(cat aur_dep_list.req)
+ req_pack_list=$(cat aur_dep_list.req | sed 's/intel-media-driver//g')
 if [ "$req_pack_list" != "" ]
     then
         echo !!!
@@ -65,10 +69,24 @@ if [ "$req_pack_list" != "" ]
         sudo pacman -S $req_pack_list
 fi
 
-## make and install req. aur packages
+##firstly make and install intel-media-driver
+mkdir 1
+cp -r intel-media-driver 1/
+cp adnlalwp cxx_flags mcolif mpbsmpks cxxflags.txt rmdtpi edfpb 1/
+rm -rf intel-media-driver
+cd 1
+./mpbsmpks
+echo !!! 
+echo super-user password is required to install intel-media-driver
+sudo pacman -U *pkg.tar.xz
+cd ..
+cp -r 1 ../inteldriver
+rm -fr 1
+
+## make and install other req. aur packages
 ./mpbsmpks
 echo !!!
-echo !!! super-user password is required to install aur depends of ffmpeg-full
+echo super-user password is required to install aur depends of ffmpeg-full
 sudo pacman -U *pkg.tar.xz
 
 cd ../ffmpeg
@@ -99,7 +117,7 @@ if [ "$req_pack_list_ffmpeg" != "" ]
         echo due to reorganize arch repo and not synced ffmpeg-full 
         echo dependencies with it, some of packages may reinstall
         echo !!!
-        echo !!! super-user password is required to install it
+        echo super-user password is required to install it
         sudo pacman -S $req_pack_list_ffmpeg
 fi
 
