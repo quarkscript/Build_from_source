@@ -6,7 +6,7 @@
 ## Use: ./get_ffmpeg-full_arch
 ## Author Andrew S.
 ## Licence GPL
-## https://github.com/quarkscript/Build_from_source.git
+## https://github.com/quarkscript/Video-transcode.git
 
 ## get required Simple_func_scripts
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
@@ -43,7 +43,11 @@ cd aur_depends
              https://aur.archlinux.org/libmfx.git
              https://aur.archlinux.org/vmaf.git
              https://aur.archlinux.org/intel-media-driver.git
-             https://aur.archlinux.org/intel-media-sdk.git')
+             https://aur.archlinux.org/intel-media-sdk.git
+             https://aur.archlinux.org/aom-git.git
+             https://aur.archlinux.org/codec2.git
+             https://aur.archlinux.org/ffnvcodec-headers.git
+             https://aur.archlinux.org/ndi-sdk.git')
 for i in $(echo $aur_ffdep )
     do
     git clone $i
