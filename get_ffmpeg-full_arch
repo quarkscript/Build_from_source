@@ -87,6 +87,9 @@ cd ..
 cp -r 1 ../inteldriver
 rm -fr 1
 
+## due to PKGBUILD can be written in non unique way, some mods of some PKGBUILDs need to be applied manual...
+./mcolif 'libilbc/PKGBUILD' 'make' 'make' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
+./mcolif 'libopenmpt-svn/PKGBUILD' 'make ' 'make ' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1)) "
 ## make and install other req. aur packages
 ./mpbsmpks
 echo !!!
@@ -95,6 +98,8 @@ sudo pacman -U *pkg.tar.xz
 
 cd ../ffmpeg
 git clone https://aur.archlinux.org/ffmpeg-full.git
+## switch from chromaprint-fftw to chromaprint if needed
+#./mcolif 'ffmpeg-full/PKGBUILD' 'chromaprint-fftw' 'chromaprint-fftw' 'chromaprint'
 echo "">deps1
 echo "">deps2
 ./edfpb "ffmpeg-full/PKGBUILD"
@@ -126,7 +131,6 @@ if [ "$req_pack_list_ffmpeg" != "" ]
 fi
 
 ## make and install ffmpeg-full
-cd ffmpeg
 extrafl='--extra-cxxflags=" '
 extrafl+=$(cat cxxflags.txt)
 extrafl+=' " \'
