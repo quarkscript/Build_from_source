@@ -18,21 +18,36 @@ wget https://github.com/quarkscript/Simple_func_scripts/raw/master/rmdtpi
 chmod +x adnlalwp cxx_flags mcolif mpbsmpks rmdtpi edfpb
 ./cxx_flags
 
-## For make a local hardware independent builds uncomment next line
+## For make a local hardware independent build uncomment next line
 #echo "">cxxflags.txt
 
 git clone https://aur.archlinux.org/vlc-git.git
+## mod deps if ffmpeg-full installed
+if  $(pacman -Qqe | grep -xq ffmpeg-full); then
+    ./mcolif 'vlc-git/PKGBUILD' 'ffmpeg' 'ffmpeg' 'ffmpeg-full'
+fi
+if  $(pacman -Qqe | grep -xq chromaprint-fftw); then
+    ./mcolif 'vlc-git/PKGBUILD' 'chromaprint' 'chromaprint' 'chromaprint-fftw'
+fi
+## extract deps
 ./edfpb "vlc-git/PKGBUILD"
 cat deps2 >>deps1
 ./rmdtpi "deps1"
 req_pacs_list=$(cat deps1.req)
+## cheks for absent deps
 if [ "$req_pacs_list" != "" ]
     then
-        echo build of vlc required absent packages:
-        echo $req_pacs_list
-        echo !!! super-user password is required to install it
+        echo "
+building vlc required absent packages:
+$req_pacs_list
+due to continiously reorganaze arch-repo, some packages
+may reinstall
+!!! sudo password is required to install it"
         sudo pacman -S $req_pacs_list
 fi
+## fix PKGBUILD 22.06.2018
+./adnlalwp 'vlc-git/PKGBUILD' 'export RCC' '  export LIBS="-lxkbcommon"'
+## make vlc
 ./mpbsmpks
-echo !!! super-user password is required to install vlc
+echo !!! sudo password is required to install vlc
 sudo pacman -U *pkg.tar.xz
