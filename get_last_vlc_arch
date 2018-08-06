@@ -1,7 +1,7 @@
 #!/bin/bash
 ## Semi-automatic script to
 ## download build and install
-## vlc on arch linux
+## vlc-git on arch linux
 ## Req.: grep hash head tail wc git wget make gcc...
 ## Use: ./get_last_vlc_arch
 ## Author Andrew S.
@@ -21,7 +21,18 @@ chmod +x adnlalwp cxx_flags mcolif mpbsmpks rmdtpi edfpb
 ## For make a local hardware independent build uncomment next line
 #echo "">cxxflags.txt
 
+mkdir aurdep
+for f in adnlalwp cxx_flags mcolif mpbsmpks rmdtpi edfpb cxxflags.txt; do
+    cp $f aurdep/$f
+done
+cd aurdep
+git clone https://aur.archlinux.org/aribb24.git
+./mpbsmpks
+echo !!! sudo password is required to install vlc aur-deps
+sudo pacman -U *pkg.tar.xz
+cd ..
 git clone https://aur.archlinux.org/vlc-git.git
+mv -f aurdep vlc-git/aurdep
 ## mod deps if ffmpeg-full installed
 if  $(pacman -Qqe | grep -xq ffmpeg-full); then
     ./mcolif 'vlc-git/PKGBUILD' 'ffmpeg' 'ffmpeg' 'ffmpeg-full'
