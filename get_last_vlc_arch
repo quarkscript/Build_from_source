@@ -27,7 +27,7 @@ done
 cd aurdep
 git clone https://aur.archlinux.org/aribb24.git
 ./mpbsmpks -u
-if [  -e *pkg.tar.xz ]; then
+if [ -e *pkg.tar.xz ]; then
     echo !!! sudo password is required to install vlc aur-deps
     sudo pacman -U *pkg.tar.xz
 fi
