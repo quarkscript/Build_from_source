@@ -4,8 +4,7 @@
 ## ffmpeg-full on arch linux
 ## Req.: grep hash head tail wc git wget make gcc...
 ## Use: ./get_ffmpeg-full_arch
-## Author Andrew S.
-## Licence GPL
+## Author Andrew S. Licence MIT
 ## https://github.com/quarkscript/Build_from_source
 
 ## get required Simple_func_scripts
@@ -77,10 +76,12 @@ cp -r intel-media-driver 1/
 cp adnlalwp cxx_flags mcolif mpbsmpks cxxflags.txt rmdtpi edfpb 1/
 rm -rf intel-media-driver
 cd 1
-./mpbsmpks
-echo !!! 
-echo super-user password is required to install intel-media-driver
-sudo pacman -U *pkg.tar.xz
+./mpbsmpks -u
+if [  -e *pkg.tar.xz ]; then
+    echo !!! 
+    echo super-user password is required to install intel-media-driver
+    sudo pacman -U *pkg.tar.xz
+fi
 cd ..
 cp -r 1 ../inteldriver
 rm -fr 1
@@ -89,15 +90,15 @@ rm -fr 1
 ./mcolif 'libilbc/PKGBUILD' 'make' 'make' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
 ./mcolif 'libopenmpt-svn/PKGBUILD' 'make ' 'make ' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1)) "
 ## make and install other req. aur packages
-./mpbsmpks
-echo !!!
-echo super-user password is required to install aur depends of ffmpeg-full
-sudo pacman -U *pkg.tar.xz
+./mpbsmpks -u
+if [  -e *pkg.tar.xz ]; then
+    echo !!!
+    echo super-user password is required to install aur depends of ffmpeg-full
+    sudo pacman -U *pkg.tar.xz
+fi
 
 cd ../ffmpeg
 git clone https://aur.archlinux.org/ffmpeg-full.git
-## switch from chromaprint-fftw to chromaprint if needed
-#./mcolif 'ffmpeg-full/PKGBUILD' 'chromaprint-fftw' 'chromaprint-fftw' 'chromaprint'
 echo "">deps1
 echo "">deps2
 ./edfpb "ffmpeg-full/PKGBUILD"
@@ -127,7 +128,10 @@ if [ "$req_pack_list_ffmpeg" != "" ]
         echo super-user password is required to install it
         sudo pacman -S $req_pack_list_ffmpeg
 fi
-
+## switch to chromaprint if chromaprint-fftw isn't option
+if  $(pacman -Qqe | grep -xq chromaprint); then
+    ./mcolif 'ffmpeg-full/PKGBUILD' 'chromaprint-fftw' 'chromaprint-fftw' 'chromaprint'
+fi
 ## make and install ffmpeg-full
 extrafl='--extra-cxxflags=" '
 extrafl+=$(cat cxxflags.txt)
@@ -141,7 +145,7 @@ echo super-user password is required for install ffmpeg-full
 sudo pacman -U *pkg.tar.xz
 
 ## as intelmedia propose
-if ( $(cat /proc/cpuinfo | grep Intel -q) ); then
+if ( $(lspci | grep VGA | grep Intel -q) ); then
     cat /etc/profile.d/intel-media.sh | sed -e 's/#export LIBVA_DRIVER_NAME=iHD/export LIBVA_DRIVER_NAME=iHD/g'>intel-media.sh
     sudo mv -f intel-media.sh /etc/profile.d/intel-media.sh
 fi

@@ -4,8 +4,7 @@
 ## vlc-git on arch linux
 ## Req.: grep hash head tail wc git wget make gcc...
 ## Use: ./get_last_vlc_arch
-## Author Andrew S.
-## License GPL
+## Author Andrew S. License MIT
 ## https://github.com/quarkscript/Build_from_source
 
 ## get required Simple_func_scripts
@@ -27,9 +26,11 @@ for f in adnlalwp cxx_flags mcolif mpbsmpks rmdtpi edfpb cxxflags.txt; do
 done
 cd aurdep
 git clone https://aur.archlinux.org/aribb24.git
-./mpbsmpks
-echo !!! sudo password is required to install vlc aur-deps
-sudo pacman -U *pkg.tar.xz
+./mpbsmpks -u
+if [  -e *pkg.tar.xz ]; then
+    echo !!! sudo password is required to install vlc aur-deps
+    sudo pacman -U *pkg.tar.xz
+fi
 cd ..
 git clone https://aur.archlinux.org/vlc-git.git
 mv -f aurdep vlc-git/aurdep
@@ -40,6 +41,10 @@ fi
 if  $(pacman -Qqe | grep -xq chromaprint-fftw); then
     ./mcolif 'vlc-git/PKGBUILD' 'chromaprint' 'chromaprint' 'chromaprint-fftw'
 fi
+## experimental mods
+./mcolif 'vlc-git/PKGBUILD' 'kdelibs' 'kdelibs' 'kdelibs4support'
+./adnlalwp "vlc-git/PKGBUILD" "hostname -f" "  sed 's|kde4-config|kf5-config|g' -i configure.ac"
+./adnlalwp "vlc-git/PKGBUILD" "hostname -f" "  sed 's|kde4-config|kf5-config|g' -i configure"
 ## extract deps
 ./edfpb "vlc-git/PKGBUILD"
 cat deps2 >>deps1
