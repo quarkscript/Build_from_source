@@ -77,7 +77,7 @@ cp adnlalwp cxx_flags mcolif mpbsmpks cxxflags.txt rmdtpi edfpb 1/
 rm -rf intel-media-driver
 cd 1
 ./mpbsmpks -u
-if [  -e *pkg.tar.xz ]; then
+if [ -e *pkg.tar.xz ]; then
     echo !!! 
     echo super-user password is required to install intel-media-driver
     sudo pacman -U *pkg.tar.xz
@@ -91,7 +91,7 @@ rm -fr 1
 ./mcolif 'libopenmpt-svn/PKGBUILD' 'make ' 'make ' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1)) "
 ## make and install other req. aur packages
 ./mpbsmpks -u
-if [  -e *pkg.tar.xz ]; then
+if [ -e *pkg.tar.xz ]; then
     echo !!!
     echo super-user password is required to install aur depends of ffmpeg-full
     sudo pacman -U *pkg.tar.xz
