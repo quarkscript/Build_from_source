@@ -5,4 +5,4 @@ get_ffmpeg-full_arch - Semi-automatic script to download build and install ffmpe
 
 get_last_vlc_arch - Semi-automatic script to download build and install vlc-git (4.0xx)
 
-get_mpc-qt_arch - Semi-automatic script to download build and install mpc-qt
+get_mpc-qt_arch - Semi-automatic script to download build and install mpc-qt (it's more for example of how to use some of my scripts in a build process than for actual use this software)
