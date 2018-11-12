@@ -44,7 +44,10 @@ cd aur_depends
              https://aur.archlinux.org/intel-media-driver.git
              https://aur.archlinux.org/intel-media-sdk.git
              https://aur.archlinux.org/codec2.git
-             https://aur.archlinux.org/ndi-sdk.git')
+             https://aur.archlinux.org/ndi-sdk.git
+             https://aur.archlinux.org/davs2-git.git
+             https://aur.archlinux.org/libklvanc-git.git
+             https://aur.archlinux.org/xavs2-git.git')
 for i in $(echo $aur_ffdep )
     do
     git clone $i
