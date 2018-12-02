@@ -4,16 +4,19 @@
 ## ffmpeg-full on arch linux
 ## Req.: grep hash head tail wc git wget make gcc...
 ## Use: ./get_ffmpeg-full_arch
-## Author Andrew S. Licence MIT
+## Author Andrew S. Licence GPL
 ## https://github.com/quarkscript/Build_from_source
+## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_bulds_scripts
 
-## get required Simple_func_scripts
+## get required Simple_func_scripts from github
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/cxx_flags
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mcolif
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mpbsmpks
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/edfpb
 wget https://github.com/quarkscript/Simple_func_scripts/raw/master/rmdtpi
+## get required Simple_func_scripts from gitlab
+## ...
 chmod +x adnlalwp cxx_flags mcolif mpbsmpks rmdtpi edfpb
 ./cxx_flags
 
@@ -45,9 +48,9 @@ cd aur_depends
              https://aur.archlinux.org/intel-media-sdk.git
              https://aur.archlinux.org/codec2.git
              https://aur.archlinux.org/ndi-sdk.git
-             https://aur.archlinux.org/davs2-git.git
              https://aur.archlinux.org/libklvanc-git.git
-             https://aur.archlinux.org/xavs2-git.git')
+             https://aur.archlinux.org/xavs2-git.git
+             https://aur.archlinux.org/davs2.git')
 for i in $(echo $aur_ffdep )
     do
     git clone $i
@@ -135,6 +138,11 @@ fi
 if  $(pacman -Qqe | grep -xq chromaprint); then
     ./mcolif 'ffmpeg-full/PKGBUILD' 'chromaprint-fftw' 'chromaprint-fftw' 'chromaprint'
 fi
+
+## remove pgp and sha checks, don't do it if you don't know why
+./mcolif 'ffmpeg-full/PKGBUILD' '{,.asc}' '{,.asc}' ''
+./mcolif 'ffmpeg-full/PKGBUILD' 'sha256sums=(' 'sha256sums=(' 'sha256sums=("SKIP" "SKIP"); forgetit=('
+
 ## make and install ffmpeg-full
 extrafl='--extra-cxxflags=" '
 extrafl+=$(cat cxxflags.txt)
