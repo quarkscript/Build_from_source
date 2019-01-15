@@ -1,71 +1,74 @@
 #!/bin/bash
-## Semi-automatic script to
-## download build and install
-## ffmpeg-full on arch linux
-## Req.: grep hash head tail wc git wget make gcc...
-## Use: ./get_ffmpeg-full_arch
+## Semi-automatic script to download build and install ffmpeg-full on arch linux
+## Req.: grep hash head tail wc git wget make gcc... Use: ./get_ffmpeg-full_arch
 ## Author Andrew S. Licence GPL
 ## https://github.com/quarkscript/Build_from_source
 ## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_bulds_scripts
 
 ## get required Simple_func_scripts from github
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/cxx_flags
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mcolif
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mpbsmpks
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/edfpb
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/rmdtpi
+# wget https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib
 ## get required Simple_func_scripts from gitlab
-## ...
-chmod +x adnlalwp cxx_flags mcolif mpbsmpks rmdtpi edfpb
-./cxx_flags
+wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_bulds_scripts/sfslib
+
+chmod +x sfslib
+./sfslib cxx_flags
 
 ## For make a local hardware independent builds uncomment next line
 #echo "">cxxflags.txt
 
 mkdir aur_depends
-cp adnlalwp cxx_flags mcolif mpbsmpks cxxflags.txt rmdtpi edfpb aur_depends
+cp cxxflags.txt aur_depends
 cp aur_depends ffmpeg -r
-cd aur_depends
- aur_ffdep=('
-             https://aur.archlinux.org/rockchip-mpp.git
-             https://aur.archlinux.org/libmysofa.git
-             https://aur.archlinux.org/xavs.git
-             https://aur.archlinux.org/vo-amrwbenc.git
-             https://aur.archlinux.org/shine.git
-             https://aur.archlinux.org/sndio.git
-             https://aur.archlinux.org/libopenmpt-svn.git
-             https://aur.archlinux.org/openh264.git
-             https://aur.archlinux.org/kvazaar.git
-             https://aur.archlinux.org/libilbc.git
-             https://aur.archlinux.org/flite1-patched.git
-             https://aur.archlinux.org/libbs2b.git
-             https://aur.archlinux.org/chromaprint-fftw.git
-             https://aur.archlinux.org/blackmagic-decklink-sdk.git
-             https://aur.archlinux.org/libmfx.git
-             https://aur.archlinux.org/vmaf.git
-             https://aur.archlinux.org/intel-media-driver.git
-             https://aur.archlinux.org/intel-media-sdk.git
-             https://aur.archlinux.org/codec2.git
-             https://aur.archlinux.org/ndi-sdk.git
-             https://aur.archlinux.org/libklvanc-git.git
-             https://aur.archlinux.org/xavs2-git.git
-             https://aur.archlinux.org/davs2.git')
+
+## add a custom aur links
+aur_ffdep='https://aur.archlinux.org/intel-media-driver.git '
+
+cd ffmpeg
+git clone https://aur.archlinux.org/ffmpeg-full.git
+
+## switch to chromaprint if chromaprint-fftw isn't option
+if  $(pacman -Qqe | grep -xq chromaprint); then
+    ../sfslib mcolif 'ffmpeg-full/PKGBUILD' 'chromaprint-fftw' 'chromaprint-fftw' 'chromaprint'
+fi
+
+echo "">deps1
+echo "">deps2
+../sfslib edfpb "ffmpeg-full/PKGBUILD"
+cat deps2 >>deps1
+cat deps1 >>ffmpeg_full_req
+../sfslib edfpb "ffmpeg-full/PKGBUILD" "depends='"
+cat deps2 >>deps1
+cat deps1 >>ffmpeg_full_req
+../sfslib edfpb "ffmpeg-full/PKGBUILD" "depends_x86_64="
+cat deps2 >>deps1
+cat deps1 >>ffmpeg_full_req
+
+echo "
+Searching required packages in the oficial repository, if they aren't there, then they are in the AUR..."
+for i in $(../sfslib s_un_pk "$(cat ffmpeg_full_req)"); do
+    aur_ffdep+="https://aur.archlinux.org/$i.git "
+done
+
+cd ../aur_depends
 for i in $(echo $aur_ffdep )
     do
     git clone $i
 done
+
 echo "">deps1
 echo "">deps2
 for i in $(ls -d */ | sed -e 's/\///g')
     do
-    ./edfpb "$i/PKGBUILD"
+    ../sfslib edfpb "$i/PKGBUILD"
+    cat deps2 >>deps1
+    cat deps1 >>aur_dep_list
+    ../sfslib edfpb "$i/PKGBUILD" "checkdepends=("
     cat deps2 >>deps1
     cat deps1 >>aur_dep_list
 done
 
 ## get aur req packs
-./rmdtpi "aur_dep_list"
+../sfslib rmdtpi "aur_dep_list"
  req_pack_list=$(cat aur_dep_list.req | sed 's/intel-media-driver//g')
 if [ "$req_pack_list" != "" ]
     then
@@ -73,30 +76,28 @@ if [ "$req_pack_list" != "" ]
         echo build aur depends of ffmpeg-full require absent packages:
         echo $req_pack_list
         echo !!! super-user password is required to install it
-        sudo pacman -S $req_pack_list
+        sudo pacman -S --needed $req_pack_list
 fi
 
 ##firstly make and install intel-media-driver
 mkdir 1
-cp -r intel-media-driver 1/
-cp adnlalwp cxx_flags mcolif mpbsmpks cxxflags.txt rmdtpi edfpb 1/
-rm -rf intel-media-driver
+mv -f intel-media-driver 1/
+cp cxxflags.txt 1/
 cd 1
-./mpbsmpks -u
+../../sfslib mpbsmpks -u
 if $(ls | grep -q pkg.tar.xz); then
     echo !!! 
     echo super-user password is required to install intel-media-driver
     sudo pacman -U *pkg.tar.xz
 fi
 cd ..
-cp -r 1 ../inteldriver
-rm -fr 1
+mv -f 1 ../inteldriver
 
 ## due to PKGBUILD can be written in non unique way, some mods of some PKGBUILDs need to be applied manual...
-./mcolif 'libilbc/PKGBUILD' 'make' 'make' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
-./mcolif 'libopenmpt-svn/PKGBUILD' 'make ' 'make ' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1)) "
+../sfslib mcolif 'libilbc/PKGBUILD' 'make' 'make' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
+../sfslib mcolif 'libopenmpt-svn/PKGBUILD' 'make ' 'make ' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1)) "
 ## make and install other req. aur packages
-./mpbsmpks -u
+../sfslib mpbsmpks -u
 if $(ls | grep -q pkg.tar.xz); then
     echo !!!
     echo super-user password is required to install aur depends of ffmpeg-full
@@ -104,23 +105,7 @@ if $(ls | grep -q pkg.tar.xz); then
 fi
 
 cd ../ffmpeg
-git clone https://aur.archlinux.org/ffmpeg-full.git
-echo "">deps1
-echo "">deps2
-./edfpb "ffmpeg-full/PKGBUILD"
-cat deps2 >>deps1
-cat deps1 >>ffmpeg_full_req
-./edfpb "ffmpeg-full/PKGBUILD" "depends_x86_64=('"
-cat deps2 >>deps1
-cat deps1 >>ffmpeg_full_req
-./edfpb "ffmpeg-full/PKGBUILD" "makedepends_x86_64="
-cat deps2 >>deps1
-cat deps1 >>ffmpeg_full_req
-# ## for intel qsv....
-# ./edfpb "ffmpeg-full/PKGBUILD" "optdepends_x86_64="
-# cat deps2 >>deps1
-# cat deps1 >>ffmpeg_full_req
-./rmdtpi "ffmpeg_full_req"
+../sfslib rmdtpi "ffmpeg_full_req"
 req_pack_list_ffmpeg=$(cat ffmpeg_full_req.req)
 if [ "$req_pack_list_ffmpeg" != "" ]
     then
@@ -128,29 +113,22 @@ if [ "$req_pack_list_ffmpeg" != "" ]
         echo build ffmpeg-full require absent packages:
         echo $req_pack_list_ffmpeg
         echo !!!
-        echo due to reorganize arch repo and not synced ffmpeg-full 
-        echo dependencies with it, some of packages may reinstall
-        echo !!!
         echo super-user password is required to install it
-        sudo pacman -S $req_pack_list_ffmpeg
-fi
-## switch to chromaprint if chromaprint-fftw isn't option
-if  $(pacman -Qqe | grep -xq chromaprint); then
-    ./mcolif 'ffmpeg-full/PKGBUILD' 'chromaprint-fftw' 'chromaprint-fftw' 'chromaprint'
+        sudo pacman -S --needed $req_pack_list_ffmpeg
 fi
 
 ## remove pgp and sha checks, don't do it if you don't know why
-./mcolif 'ffmpeg-full/PKGBUILD' '{,.asc}' '{,.asc}' ''
-./mcolif 'ffmpeg-full/PKGBUILD' 'sha256sums=(' 'sha256sums=(' 'sha256sums=("SKIP" "SKIP"); forgetit=('
+../sfslib mcolif 'ffmpeg-full/PKGBUILD' '{,.asc}' '{,.asc}' ''
+../sfslib mcolif 'ffmpeg-full/PKGBUILD' 'sha256sums=(' 'sha256sums=(' 'sha256sums=("SKIP" "SKIP"); forgetit=('
 
 ## make and install ffmpeg-full
 extrafl='--extra-cxxflags=" '
 extrafl+=$(cat cxxflags.txt)
 extrafl+=' " \'
-cd ffmpeg-full
-../adnlalwp 'PKGBUILD' 'prefix=' "$extrafl" 
- cd ..
-./mpbsmpks
+
+../sfslib adnlalwp 'ffmpeg-full/PKGBUILD' 'prefix=' "$extrafl" 
+
+../sfslib mpbsmpks
 echo !!!
 echo super-user password is required for install ffmpeg-full
 sudo pacman -U *pkg.tar.xz
