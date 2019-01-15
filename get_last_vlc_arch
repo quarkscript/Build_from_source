@@ -1,22 +1,17 @@
 #!/bin/bash
-## Semi-automatic script to
-## download build and install
-## vlc-git on arch linux
-## Req.: grep hash head tail wc git wget make gcc...
-## Use: ./get_last_vlc_arch
-## Author Andrew S. License MIT
+## Semi-automatic script to download build and install vlc-git on arch linux
+## Req.: grep hash head tail wc git wget make gcc... Use: ./get_last_vlc_arch
+## Author Andrew S. License MIT and/or GPL
 ## https://github.com/quarkscript/Build_from_source
+## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_bulds_scripts
 
-## get required Simple_func_scripts
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/adnlalwp
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/cxx_flags
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mcolif
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/mpbsmpks
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/edfpb
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/rmdtpi
-wget https://github.com/quarkscript/Simple_func_scripts/raw/master/rmls
-chmod +x adnlalwp cxx_flags mcolif mpbsmpks rmdtpi edfpb rmls
-./cxx_flags
+## get required Simple_func_scripts from github
+wget https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib
+## get required Simple_func_scripts from gitlab
+# wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_bulds_scripts/sfslib
+
+chmod +x sfslib
+./sfslib cxx_flags
 
 ## For make a local hardware independent build uncomment next line
 #echo "">cxxflags.txt
@@ -25,37 +20,33 @@ git clone https://aur.archlinux.org/vlc-git.git
 
 ## mod deps if ffmpeg-full installed
 if  $(pacman -Qq | grep -xq ffmpeg-full); then
-    ./mcolif 'vlc-git/PKGBUILD' 'ffmpeg' 'ffmpeg' 'ffmpeg-full'
+    ./sfslib mcolif 'vlc-git/PKGBUILD' 'ffmpeg' 'ffmpeg' 'ffmpeg-full'
 fi
+## mod deps if chromaprint installed
 if  $(pacman -Qq | grep -xq chromaprint-fftw); then
-    ./mcolif 'vlc-git/PKGBUILD' 'chromaprint' 'chromaprint' 'chromaprint-fftw'
+    ./sfslib mcolif 'vlc-git/PKGBUILD' 'chromaprint' 'chromaprint' 'chromaprint-fftw'
 fi
 
 ## some mods
-./mcolif 'vlc-git/PKGBUILD' 'libx265.so' 'libx265.so' 'x265'
-./mcolif 'vlc-git/PKGBUILD' 'libx264.so' 'libx264.so' 'x264'
-./rmls 'vlc-git/PKGBUILD' 'enable-realrtsp'
-./rmls 'vlc-git/PKGBUILD' 'enable-aa'
-./rmls 'vlc-git/PKGBUILD' 'enable-chromaprint-fftw'
+./sfslib rmls 'vlc-git/PKGBUILD' 'enable-realrtsp'
+./sfslib rmls 'vlc-git/PKGBUILD' 'enable-aa'
+./sfslib rmls 'vlc-git/PKGBUILD' 'enable-chromaprint-fftw'
 
 ## extract deps
-./edfpb "vlc-git/PKGBUILD"
+./sfslib edfpb "vlc-git/PKGBUILD"
 cat deps2 >>deps1
-./rmdtpi "deps1"
+./sfslib rmdtpi "deps1"
 req_pacs_list=$(cat deps1.req)
 ## cheks for absent deps
-if [ "$req_pacs_list" != "" ]
-    then
-        echo "
+if [ "$req_pacs_list" != "" ]; then
+    echo "
 building vlc required absent packages:
 $req_pacs_list
-due to continiously reorganaze arch-repo, some packages
-may reinstall
 !!! sudo password is required to install it"
-        sudo pacman -S $req_pacs_list
+    sudo pacman -S --needed $req_pacs_list
 fi
 
 ## make vlc
-./mpbsmpks
+./sfslib mpbsmpks
 echo !!! sudo password is required to install vlc
 sudo pacman -U *pkg.tar.xz
