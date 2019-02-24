@@ -6,7 +6,7 @@
 ## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_bulds_scripts
 
 ## get required Simple_func_scripts from github
-wget https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib
+#wget https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib
 ## get required Simple_func_scripts from gitlab
 # wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_bulds_scripts/sfslib
 
@@ -15,7 +15,28 @@ chmod +x sfslib
 
 ## For make a local hardware independent build uncomment next line
 #echo "">cxxflags.txt
-
+mkdir aurdep
+cd aurdep
+mkdir depdep
+cd depdep
+git clone https://aur.archlinux.org/libdvdcss-git.git
+cp ../../cxxflags.txt cxxflags.txt
+../../sfslib mpbsmpks
+echo !!! sudo password is required
+sudo pacman -U *pkg.tar.xz
+cd ../
+mkdir dep
+cd dep
+git clone https://aur.archlinux.org/libdvdread-git.git
+cp ../../cxxflags.txt cxxflags.txt
+../../sfslib mpbsmpks
+echo !!! sudo password is required
+sudo pacman -U *pkg.tar.xz
+cd ../../
+mkdir vlc
+cd vlc
+cp ../sfslib sfslib
+cp ../cxxflags.txt cxxflags.txt
 git clone https://aur.archlinux.org/vlc-git.git
 
 ## mod deps if ffmpeg-full installed
