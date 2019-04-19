@@ -1,0 +1,150 @@
+#!/bin/bash
+## Arch linux packages system is required, overlay filesystem support is required too.
+## Author Andrew S    License for this script itself is GPL
+## License for rezult depends of components that are nonfree
+## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_bulds_scripts
+## https://github.com/quarkscript/Build_from_source
+echo "
+        This script is try to build ffmpeg-full in overlayed chrooted environment,
+as a result all downloaded and builded components (except already installed on system) will be 
+included to final package. It is better to install specific drivers and software before run,
+like nvidia-dkms cuda gcc and so on. This script utilize arch linux packages system, and it uses 
+3rd party PKGBUILDs from AUR for required components and for ffmpeg-full...
+Final license of rezulted package is complex and nonfree.
+        
+Build process is not fully automatic, your presence is required (for a sudo privileges)
+"
+sleep 50
+
+who=$(whoami)
+if [ "$who" == "root" ]; then echo "
+to run this script you must be a regular user who can run sudo, but not a root
+" ; exit 1 ; fi
+ 
+if !(cat /proc/filesystems | grep -q overlay ); then 
+    echo !!! superuser password is required for modprobe overlay 
+    sudo modprobe overlay
+fi
+if !(cat /proc/filesystems | grep -q overlay ); then
+    echo "
+    Seems current linux kernel doesn't support overlay filesystem.
+    overlayfs is required... current build impossible without it
+    "; exit 1
+fi
+
+mkdir upper work processdir
+mkdir upper/build
+chown $who upper/build
+
+cat<<EOf>upper/build/runscript
+#!/bin/bash
+echo "$who ALL=(ALL) NOPASSWD: ALL
+" >>/etc/sudoers
+# wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_bulds_scripts/get_ffmpeg-full_arch
+wget https://raw.githubusercontent.com/quarkscript/Build_from_source/master/get_ffmpeg-full_arch
+
+## extra optimizations off
+cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' | sed 's/#echo /echo /g' >get_ffmpeg-full_arch.
+## extra optimizations on
+#cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' >get_ffmpeg-full_arch.
+
+chown $who get_ffmpeg-full_arch.
+chmod +x get_ffmpeg-full_arch.
+sudo -u $who ./get_ffmpeg-full_arch.
+EOf
+ 
+chmod +x upper/build/runscript
+echo !!! superuser password is required for mount overlay folder and chroot it
+sudo mount -t overlay overlay -o,lowerdir=/,upperdir=upper,workdir=work processdir
+sudo mount --bind /proc processdir/proc
+sudo mount --bind /dev processdir/dev
+sudo mount --bind /sys processdir/sys
+sudo mount --bind /tmp processdir/tmp
+sudo chroot processdir /bin/bash <<EOf
+cd /build
+./runscript
+EOf
+
+echo !!! superuser password is required for unmount overlay folder
+sudo umount processdir/tmp
+sudo umount processdir/proc
+sudo umount processdir/dev
+sudo umount processdir/sys
+sudo umount processdir
+
+echo clear build
+sudo rm -fr processdir work upper/build upper/tmp upper/root upper/var upper/home upper/etc/sudoers
+echo search and remove character files
+for ii in $(find upper/ ! -type d); do
+    if [ -c "$ii" ]; then sudo rm -f $ii ; fi
+done
+
+tar -czvf source.tar.gz upper
+
+## set final pkg params
+pkgname=ffmpeg-full-ocheb
+installdir='/opt'
+pkgdir='$pkgdir'
+prefix='o_'
+set '$@'
+
+## gen PKGBUILD
+cat<<EOf>PKGBUILD
+pkgname=$pkgname
+pkgver=$(date +%Y.%m.%e)
+pkgrel=1 
+pkgdesc='FFMPEG-FULL-Overlayed CHrooted Environment Build'
+arch=('i686' 'x86_64')
+url='https://www.ffmpeg.org/'
+license=(nonfree)
+conflicts=($pkgname)
+source=(source.tar.gz)
+sha512sums=(SKIP)
+
+package() {
+mkdir -p $pkgdir$installdir/$pkgname
+cp -r upper/* $pkgdir$installdir/$pkgname
+echo "binpath $installdir/$pkgname/usr/local/sbin:$installdir/$pkgname/usr/local/bin:$installdir/$pkgname/usr/bin:$installdir/$pkgname/opt/cuda/bin:$installdir/$pkgname/opt/intel/mediasdk/bin:/opt/intel/mediasdk/bin">path.txt
+echo "libpath $installdir/$pkgname/usr/lib:$installdir/$pkgname/opt/intel/mediasdk/lib64:$installdir/$pkgname/opt/intel/mediasdk/lib64/mfx:$installdir/$pkgname/opt/intel/mediasdk/lib:$installdir/$pkgname/opt/intel/mediasdk/lib/mfx:$installdir/$pkgname/opt/cuda/lib:$installdir/$pkgname/usr/local/lib">>path.txt
+install -Dm 644 path.txt $pkgdir$installdir/$pkgname/path.txt
+
+mkdir -p $pkgdir/usr/bin
+
+echo '#!/bin/bash
+export PATH=''$''(cat $installdir/$pkgname/path.txt | grep binpath | sed "s/binpath //g"):''$''PATH
+export LD_LIBRARY_PATH=''$''(cat $installdir/$pkgname/path.txt | grep libpath | sed "s/libpath //g"):''$''LD_LIBRARY_PATH
+ffmpeg $@
+'>$prefix''ffmpeg
+install -m755 $prefix''ffmpeg $pkgdir/usr/bin/$prefix''ffmpeg
+
+echo '#!/bin/bash
+export PATH=''$''(cat $installdir/$pkgname/path.txt | grep binpath | sed "s/binpath //g"):''$''PATH
+export LD_LIBRARY_PATH=''$''(cat $installdir/$pkgname/path.txt | grep libpath | sed "s/libpath //g"):''$''LD_LIBRARY_PATH
+ffplay $@
+'>$prefix''ffplay
+install -m755 $prefix''ffplay $pkgdir/usr/bin/$prefix''ffplay
+
+echo '#!/bin/bash
+export PATH=''$''(cat $installdir/$pkgname/path.txt | grep binpath | sed "s/binpath //g"):''$''PATH
+export LD_LIBRARY_PATH=''$''(cat $installdir/$pkgname/path.txt | grep libpath | sed "s/libpath //g"):''$''LD_LIBRARY_PATH
+ffprobe $@
+'>$prefix''ffprobe
+install -m755 $prefix''ffprobe $pkgdir/usr/bin/$prefix''ffprobe
+}
+EOf
+
+makepkg
+if (ls | grep -q pkg.tar.xz); then
+echo "
+if build completes successful the package is
+'$(ls | grep pkg.tar.xz)'
+                                            do not forget to install it
+This may work on system where it was built, other systems are questionable
+new commands are: $prefix""ffmpeg , $prefix""ffplay , $prefix""ffprobe
+"
+else echo "
+It seems something go wrong... final package was not build, 
+even a buildfail cannot lead to this. Check 'upper' folder 
+probably there a special files like character-type and so on
+"
+fi
