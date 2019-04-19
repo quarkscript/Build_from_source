@@ -44,7 +44,7 @@ cat deps2 >>deps1
 cat deps1 >>ffmpeg_full_req
 
 echo "
-Searching required packages in the oficial repository, if they aren't there, then they are in the AUR..."
+Searching required packages in the official repository, if they aren't there, then they are in the AUR..."
 for i in $(../sfslib s_un_pk "$(cat ffmpeg_full_req)"); do
     aur_ffdep+="https://aur.archlinux.org/$i.git "
 done
