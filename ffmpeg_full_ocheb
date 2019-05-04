@@ -2,7 +2,7 @@
 ## Arch linux packages system is required, overlay filesystem support is required too.
 ## Author Andrew S    License for this script itself is GPL
 ## License for rezult depends of components that are nonfree
-## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_bulds_scripts
+## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
 ## https://github.com/quarkscript/Build_from_source
 echo "
         This script is try to build ffmpeg-full in overlayed chrooted environment,
