@@ -6,9 +6,9 @@
 ## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_bulds_scripts
 
 ## get required Simple_func_scripts from github
-# wget https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib
+wget https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib
 ## get required Simple_func_scripts from gitlab
-wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_bulds_scripts/sfslib
+# wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_builds_scripts/sfslib
 
 chmod +x sfslib
 ./sfslib cxx_flags
