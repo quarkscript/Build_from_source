@@ -3,14 +3,27 @@
 ## Req.: grep hash head tail wc git wget make gcc... Use: ./get_ffmpeg-full_arch
 ## Author Andrew S. Licence GPL
 ## https://github.com/quarkscript/Build_from_source
-## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_bulds_scripts
+## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
 
-## get required Simple_func_scripts from github
+
+if [ ! -f sfslib ]; then
+## get required Simple_func_scripts from github source
 wget https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib
-## get required Simple_func_scripts from gitlab
-# wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_builds_scripts/sfslib
-
+fi
+if [ ! -f sfslib ]; then
+## get required Simple_func_scripts from gitlab source
+wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_builds_scripts/sfslib
+fi
 chmod +x sfslib
+if [ ! -x sfslib ]; then
+    echo '
+There is some problem of getting required sfslib
+you may download it manually from one of sourses:
+https://github.com/quarkscript/Build_from_source
+https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
+Build process interrupted'
+    exit 1
+fi
 ./sfslib cxx_flags
 
 ## For make a local hardware independent builds uncomment next line
@@ -44,7 +57,8 @@ cat deps2 >>deps1
 cat deps1 >>ffmpeg_full_req
 
 echo "
-Searching required packages in the official repository, if they aren't there, then they are in the AUR..."
+Searching required packages in the official repository, 
+if they aren't there, then they are in the AUR..."
 for i in $(../sfslib s_un_pk "$(cat ffmpeg_full_req)"); do
     aur_ffdep+="https://aur.archlinux.org/$i.git "
 done
@@ -79,7 +93,8 @@ if [ "$req_pack_list" != "" ]
         sudo pacman -S --needed $req_pack_list
 fi
 
-##firstly make and install intel-media-driver
+## firstly make and install intel-media-driver
+make_and_install_intel_md(){
 mkdir 1
 mv -f intel-media-driver 1/
 cp cxxflags.txt 1/
@@ -92,15 +107,23 @@ if $(ls | grep -q pkg.tar.xz); then
 fi
 cd ..
 mv -f 1 ../inteldriver
+}
+## this block is organized as a function because it can be 
+## simply ignored in case of build another ffmpeg-pkg variants
+make_and_install_intel_md
 
 ## due to PKGBUILD can be written in non unique way, some mods of some PKGBUILDs need to be applied manual...
 ../sfslib mcolif 'libilbc/PKGBUILD' 'make' 'make' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
 ../sfslib mcolif 'libopenmpt-svn/PKGBUILD' 'make ' 'make ' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1)) "
+
+## rm sha checks from ndi-sdk, its a not good idia actually
+../sfslib mcolif 'ndi-sdk/PKGBUILD' 'sha256sums' 'sha256sums' 'sha256sums=(SKIP) forget_it'
+
 ## make and install other req. aur packages
 ../sfslib mpbsmpks -u
 if $(ls | grep -q pkg.tar.xz); then
     echo !!!
-    echo super-user password is required to install aur depends of ffmpeg-full
+    echo super-user password is required to install aur deps of ffmpeg-full
     sudo pacman -U *pkg.tar.xz
 fi
 

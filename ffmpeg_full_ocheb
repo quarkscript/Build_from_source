@@ -36,12 +36,33 @@ mkdir upper work processdir
 mkdir upper/build
 chown $who upper/build
 
+if [ -f get_ffmpeg-full_arch ]; then
+cp get_ffmpeg-full_arch upper/build/get_ffmpeg-full_arch
+fi
+if [ -f sfslib ]; then
+cp sfslib upper/build/sfslib
+fi
+
 cat<<EOf>upper/build/runscript
 #!/bin/bash
 echo "$who ALL=(ALL) NOPASSWD: ALL
 " >>/etc/sudoers
-# wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_bulds_scripts/get_ffmpeg-full_arch
+
+if [ ! -f get_ffmpeg-full_arch ]; then
+wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_builds_scripts/get_ffmpeg-full_arch
+fi
+if [ ! -f get_ffmpeg-full_arch ]; then
 wget https://raw.githubusercontent.com/quarkscript/Build_from_source/master/get_ffmpeg-full_arch
+fi
+if [ ! -f get_ffmpeg-full_arch ]; then
+echo "There is some problem of getting required get_ffmpeg-full_arch
+you can download it manually from mirrors:
+https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
+https://github.com/quarkscript/Build_from_source
+and palce with current script, then rerun current script.
+Build process interrupted"
+exit 1 
+fi
 
 ## extra optimizations off
 cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' | sed 's/#echo /echo /g' >get_ffmpeg-full_arch.
@@ -60,10 +81,13 @@ sudo mount --bind /proc processdir/proc
 sudo mount --bind /dev processdir/dev
 sudo mount --bind /sys processdir/sys
 sudo mount --bind /tmp processdir/tmp
-sudo chroot processdir /bin/bash <<EOf
+
+## run
+sudo chroot processdir /bin/bash <<EEOOF
 cd /build
-./runscript
-EOf
+./runscript |& tee build.log 
+chown $who build.log
+EEOOF
 
 echo !!! superuser password is required for unmount overlay folder
 sudo umount processdir/tmp
@@ -71,6 +95,14 @@ sudo umount processdir/proc
 sudo umount processdir/dev
 sudo umount processdir/sys
 sudo umount processdir
+
+if $(cat upper/build/build.log | grep -q --regexp="error: "); then
+echo "
+It seems something go wrong... Build incomplete or fail
+Check upper/build/build.log
+"
+exit 1
+fi
 
 echo clear build
 sudo rm -fr processdir work upper/build upper/tmp upper/root upper/var upper/home upper/etc/sudoers
@@ -136,15 +168,13 @@ EOf
 makepkg
 if (ls | grep -q pkg.tar.xz); then
 echo "
-if build completes successful the package is
+the package is
 '$(ls | grep pkg.tar.xz)'
                                             do not forget to install it
 This may work on system where it was built, other systems are questionable
 new commands are: $prefix""ffmpeg , $prefix""ffplay , $prefix""ffprobe
 "
 else echo "
-It seems something go wrong... final package was not build, 
-even a buildfail cannot lead to this. Check 'upper' folder 
-probably there a special files like character-type and so on
+It seems something go wrong... final package was not build
 "
 fi
