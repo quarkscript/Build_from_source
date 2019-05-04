@@ -91,7 +91,7 @@ set '$@'
 ## gen PKGBUILD
 cat<<EOf>PKGBUILD
 pkgname=$pkgname
-pkgver=$(date +%Y.%m.%e)
+pkgver=$(date +%Y.%m.%e | sed 's/ //g')
 pkgrel=1 
 pkgdesc='FFMPEG-FULL-Overlayed CHrooted Environment Build'
 arch=('i686' 'x86_64')
