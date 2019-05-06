@@ -5,11 +5,11 @@
 ## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
 ## https://github.com/quarkscript/Build_from_source
 echo "
-        This script is try to build ffmpeg-full in overlayed chrooted environment,
+        This script is try to build ffmpeg-full-amd in overlayed chrooted environment,
 as a result all downloaded and builded components (except already installed on system) will be 
 included to final package. It is better to install specific drivers and software before run,
-like nvidia-dkms cuda gcc and so on. This script utilize arch linux packages system, and it uses 
-3rd party PKGBUILDs from AUR for required components and for ffmpeg-full...
+like gcc make and so on. This script utilize arch linux packages system, and it uses 
+3rd party PKGBUILDs from AUR for required components and for ffmpeg-full-amd...
 Final license of rezulted package is complex and nonfree.
         
 Build process is not fully automatic, your presence is required (for a sudo privileges)
@@ -65,9 +65,12 @@ exit 1
 fi
 
 ## extra optimizations off
-cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' | sed 's/#echo /echo /g' >get_ffmpeg-full_arch.
+cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' | sed 's/#echo /echo /g' >get_ffmpeg-full_arch.tmp
 ## extra optimizations on
-#cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' >get_ffmpeg-full_arch.
+#cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' >get_ffmpeg-full_arch.tmp
+
+## turn ffmpeg-full into ffmpeg-full-amd
+cat get_ffmpeg-full_arch.tmp | sed "s@https\:\/\/aur.archlinux.org\/ffmpeg-full.git@https\:\/\/aur.archlinux.org\/ffmpeg-amd-full-git.git@g" | sed "s@aur_ffdep='htt@# aur_ffdep='htt@g" | sed "s@make_and_install_intel_md@# make_and_install_intel_md@g" | sed "s@# make_and_install_intel_md(@make_and_install_intel_md(@g" | sed "s@ffmpeg-full\/@ffmpeg-amd-full-git\/@g" >get_ffmpeg-full_arch.
 
 chown $who get_ffmpeg-full_arch.
 chmod +x get_ffmpeg-full_arch.
@@ -114,9 +117,9 @@ done
 tar -czvf source.tar.gz upper
 
 ## set final pkg params, change it as you want
-pkgname=ffmpeg-full-ocheb
+pkgname=ffmpeg-full-amd-ocheb
 installdir='/opt'
-prefix='o_'
+prefix='amd_'
 ## do not change next variables
 pkgdir='$pkgdir'
 i='$i'
@@ -128,7 +131,7 @@ cat<<EOf>PKGBUILD
 pkgname=$pkgname
 pkgver=$(date +%Y.%m.%e | sed 's/ //g')
 pkgrel=1 
-pkgdesc='FFMPEG-FULL-Overlayed CHrooted Environment Build'
+pkgdesc='ffmpeg-full no-intel no-nvidia overlayed chrooted env. build. Main PKGBUILD taken from https://aur.archlinux.org/packages/ffmpeg-amd-full-git'
 arch=('i686' 'x86_64')
 url='https://www.ffmpeg.org/'
 license=(nonfree)
@@ -139,8 +142,8 @@ sha512sums=(SKIP)
 package() {
 mkdir -p $pkgdir$installdir/$pkgname
 cp -r upper/* $pkgdir$installdir/$pkgname
-echo "binpath $installdir/$pkgname/usr/local/sbin:$installdir/$pkgname/usr/local/bin:$installdir/$pkgname/usr/bin:$installdir/$pkgname/opt/cuda/bin:$installdir/$pkgname/opt/intel/mediasdk/bin:/opt/intel/mediasdk/bin">path.txt
-echo "libpath $installdir/$pkgname/usr/lib:$installdir/$pkgname/opt/intel/mediasdk/lib64:$installdir/$pkgname/opt/intel/mediasdk/lib64/mfx:$installdir/$pkgname/opt/intel/mediasdk/lib:$installdir/$pkgname/opt/intel/mediasdk/lib/mfx:$installdir/$pkgname/opt/cuda/lib:$installdir/$pkgname/usr/local/lib">>path.txt
+echo "binpath $installdir/$pkgname/usr/local/sbin:$installdir/$pkgname/usr/local/bin:$installdir/$pkgname/usr/bin">path.txt
+echo "libpath $installdir/$pkgname/usr/lib:$installdir/$pkgname/usr/local/lib">>path.txt
 install -Dm 644 path.txt $pkgdir$installdir/$pkgname/path.txt
 
 mkdir -p $pkgdir/usr/bin
@@ -172,6 +175,6 @@ This may work on system where it was built, other systems are questionable
 new commands are: $prefix""ffmpeg , $prefix""ffplay , $prefix""ffprobe
 "
 else echo "
-It seems something goes wrong... final package was not built
+It seems something goes wrong... final package was not build
 "
 fi
