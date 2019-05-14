@@ -152,7 +152,7 @@ export LD_LIBRARY_PATH=''$''(cat $installdir/$pkgname/path.txt | grep libpath | 
 ffmpeg_string="'$j' "
 ttt=$''#
 for ((i=1; i<=$''ttt; i+=1)); do
-  ffmpeg_string+='"'"'"$'"'"'$i'"'"'"'" '"'
+  ffmpeg_string+='"'"'"$''{'"'"'$i'"'"'}"'" '"'
 done
 eval $''ffmpeg_string
 '>$prefix''$j
