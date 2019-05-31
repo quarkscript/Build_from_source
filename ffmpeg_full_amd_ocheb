@@ -99,7 +99,7 @@ sudo umount processdir/dev
 sudo umount processdir/sys
 sudo umount processdir
 
-if $(cat upper/build/build.log | grep -q --regexp="error: "); then
+if $(cat upper/build/build.log | grep -x --regexp="failed retrieving file" | grep -q --regexp="error: "); then
 echo "
 It seems something goes wrong... Build fail
 Check upper/build/build.log
