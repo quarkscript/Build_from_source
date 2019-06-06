@@ -117,7 +117,8 @@ make_and_install_intel_md
 ../sfslib mcolif 'libopenmpt-svn/PKGBUILD' 'make ' 'make ' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1)) "
 
 ## rm sha checks from ndi-sdk, its a not good idia actually
-../sfslib mcolif 'ndi-sdk/PKGBUILD' 'sha256sums' 'sha256sums' 'sha256sums=(SKIP) forget_it'
+../sfslib skipsha 'ndi-sdk/PKGBUILD'
+#../sfslib mcolif 'ndi-sdk/PKGBUILD' 'sha256sums' 'sha256sums' 'sha256sums=(SKIP) forget_it'
 
 ## make and install other req. aur packages
 ../sfslib mpbsmpks -u
@@ -140,9 +141,10 @@ if [ "$req_pack_list_ffmpeg" != "" ]
         sudo pacman -S --needed $req_pack_list_ffmpeg
 fi
 
-## remove pgp and sha checks, don't do it if you don't know why
-../sfslib mcolif 'ffmpeg-full/PKGBUILD' '{,.asc}' '{,.asc}' ''
-../sfslib mcolif 'ffmpeg-full/PKGBUILD' 'sha256sums=(' 'sha256sums=(' 'sha256sums=("SKIP" "SKIP"); forgetit=('
+## remove pgp and sha checks... because sourcecode updates mutch faster then a PKGBUILDs 
+../sfslib mcolif 'ffmpeg-full/PKGBUILD' '{,.asc}' '{,.asc}' ' "rmasc"'
+echo 'removed pgp signature' >ffmpeg-full/rmasc
+../sfslib skipsha 'ffmpeg-full/PKGBUILD'
 
 ## make and install ffmpeg-full
 extrafl='--extra-cxxflags=" '
