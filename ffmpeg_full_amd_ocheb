@@ -14,7 +14,7 @@ Final license of rezulted package is complex and nonfree.
         
 Build process is not fully automatic, your presence is required (for a sudo privileges)
 "
-sleep 50
+sleep 15
 
 who=$(whoami)
 if [ "$who" == "root" ]; then echo "
@@ -65,12 +65,35 @@ exit 1
 fi
 
 ## extra optimizations off
-cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' | sed 's/#echo /echo /g' >get_ffmpeg-full_arch.tmp
+#cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' | sed 's/#echo /echo /g' >get_ffmpeg-full_arch.tmp
 ## extra optimizations on
-#cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' >get_ffmpeg-full_arch.tmp
+cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' >get_ffmpeg-full_arch.tmp
 
 ## turn ffmpeg-full into ffmpeg-full-amd
 cat get_ffmpeg-full_arch.tmp | sed "s@https\:\/\/aur.archlinux.org\/ffmpeg-full.git@https\:\/\/aur.archlinux.org\/ffmpeg-amd-full-git.git@g" | sed "s@aur_ffdep='htt@# aur_ffdep='htt@g" | sed "s@make_and_install_intel_md@# make_and_install_intel_md@g" | sed "s@# make_and_install_intel_md(@make_and_install_intel_md(@g" | sed "s@ffmpeg-full\/@ffmpeg-amd-full-git\/@g" >get_ffmpeg-full_arch.
+
+## get sfslib
+if [ ! -f sfslib ]; then
+## get required Simple_func_scripts from github source
+wget https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib
+fi
+if [ ! -f sfslib ]; then
+## get required Simple_func_scripts from gitlab source
+wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_builds_scripts/sfslib
+fi
+chown $who sfslib
+chmod +x sfslib 
+if [ ! -x sfslib ]; then
+    echo '
+There is some problem of getting required sfslib
+you may download it manually from one of sourses:
+https://github.com/quarkscript/Build_from_source
+https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
+Build process interrupted'
+    exit 1
+fi
+## fix tensorflow include dir
+./sfslib adnlalwp 'get_ffmpeg-full_arch.' 'ffmpeg-amd-full-git.git' "../sfslib adnlalwp 'ffmpeg-amd-full-git/PKGBUILD' 'Running ffmpeg configure script...' '_cflags+=-I/usr/include/tensorflow'"
 
 chown $who get_ffmpeg-full_arch.
 chmod +x get_ffmpeg-full_arch.
@@ -99,14 +122,14 @@ sudo umount processdir/dev
 sudo umount processdir/sys
 sudo umount processdir
 
-if $(cat upper/build/build.log | grep -x --regexp="failed retrieving file" | grep -q --regexp="error: "); then
-echo "
-It seems something goes wrong... Build fail
-Check upper/build/build.log
-"
-exit 1
-fi
-
+# if $(cat upper/build/build.log | grep -v --regexp="failed retrieving file" | grep -iq --regexp="error: "); then
+# echo "
+# It seems something goes wrong... Build fail
+# Check upper/build/build.log
+# "
+# exit 1
+# fi
+cp -f upper/build/build.log build.log
 echo clear build
 sudo rm -fr processdir work upper/build upper/tmp upper/root upper/var upper/home upper/etc/sudoers
 echo search and remove character files
@@ -115,6 +138,9 @@ for ii in $(find upper/ ! -type d); do
 done
 
 tar -czvf source.tar.gz upper
+
+## remove upper dir
+sudo rm -fr upper
 
 ## set final pkg params, change it as you want
 pkgname=ffmpeg-full-amd-ocheb
@@ -167,7 +193,8 @@ EOf
 
 makepkg
 if (ls | grep -q pkg.tar.xz); then
-echo "
+echo "because buildfail detection gives false positive result, it was turned off
+
 the package is
 '$(ls | grep pkg.tar.xz)'
                                             do not forget to install it
