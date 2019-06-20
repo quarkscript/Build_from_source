@@ -34,7 +34,8 @@ cp cxxflags.txt aur_depends
 cp aur_depends ffmpeg -r
 
 ## add a custom aur links
-aur_ffdep='https://aur.archlinux.org/intel-media-driver.git '
+#aur_ffdep='https://aur.archlinux.org/intel-media-driver.git https://aur.archlinux.org/hm.git '
+aur_ffdep='https://aur.archlinux.org/hm.git '
 
 cd ffmpeg
 git clone https://aur.archlinux.org/ffmpeg-full.git
@@ -55,6 +56,12 @@ cat deps1 >>ffmpeg_full_req
 ../sfslib edfpb "ffmpeg-full/PKGBUILD" "depends_x86_64="
 cat deps2 >>deps1
 cat deps1 >>ffmpeg_full_req
+../sfslib edfpb "ffmpeg-full/PKGBUILD" "makedepends"
+cat deps2 >>deps1
+cat deps1 >>ffmpeg_full_req
+
+## rm already included to aur-list
+#cat ffmpeg_full_req | sed 's/ hm / /g' | sed 's/ intel-media-driver / /g' >ffmpeg_full_req
 
 echo "
 Searching required packages in the official repository, 
@@ -79,11 +86,15 @@ for i in $(ls -d */ | sed -e 's/\///g')
     ../sfslib edfpb "$i/PKGBUILD" "checkdepends=("
     cat deps2 >>deps1
     cat deps1 >>aur_dep_list
+    ../sfslib edfpb "$i/PKGBUILD" "makedepends"
+    cat deps2 >>deps1
+    cat deps1 >>aur_dep_list
 done
 
 ## get aur req packs
 ../sfslib rmdtpi "aur_dep_list"
- req_pack_list=$(cat aur_dep_list.req | sed 's/intel-media-driver//g')
+ #req_pack_list=$(cat aur_dep_list.req | sed 's/intel-media-driver//g' | sed 's/ hm / /g')
+ req_pack_list=$(cat aur_dep_list.req | sed 's/ hm / /g')
 if [ "$req_pack_list" != "" ]
     then
         echo !!!
@@ -110,7 +121,7 @@ mv -f 1 ../inteldriver
 }
 ## this block is organized as a function because it can be 
 ## simply ignored in case of build another ffmpeg-pkg variants
-make_and_install_intel_md
+#make_and_install_intel_md
 
 ## due to PKGBUILD can be written in non unique way, some mods of some PKGBUILDs need to be applied manual...
 ../sfslib mcolif 'libilbc/PKGBUILD' 'make' 'make' "make -j$(($(grep 'model name' /proc/cpuinfo --count)+1))"
@@ -119,6 +130,9 @@ make_and_install_intel_md
 ## rm sha checks from ndi-sdk, its a not good idia actually
 ../sfslib skipsha 'ndi-sdk/PKGBUILD'
 #../sfslib mcolif 'ndi-sdk/PKGBUILD' 'sha256sums' 'sha256sums' 'sha256sums=(SKIP) forget_it'
+
+## rm -j1 from hm cause it unneded
+../sfslib mcolif 'hm/PKGBUILD' 'make ' '-j1' " "
 
 ## make and install other req. aur packages
 ../sfslib mpbsmpks -u
