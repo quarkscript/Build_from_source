@@ -1,7 +1,7 @@
 #!/bin/bash
 ## Arch linux packages system is required, overlay filesystem support is required too.
 ## Author Andrew S    License for this script itself is GPL
-## License for rezult depends of components that are nonfree
+## License for result depends on components, some of them are nonfree
 ## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
 ## https://github.com/quarkscript/Build_from_source
 echo "
@@ -65,12 +65,9 @@ exit 1
 fi
 
 ## extra optimizations off
-#cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' | sed 's/#echo /echo /g' >get_ffmpeg-full_arch.tmp
+cat get_ffmpeg-full_arch | sed 's/#cat sfslib/cat sfslib/g' | sed 's/#echo /echo /g' | sed "s@ffmpeg-full@ffmpeg-amd-full-git@g" >get_ffmpeg-full_arch.
 ## extra optimizations on
-cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' >get_ffmpeg-full_arch.tmp
-
-## turn ffmpeg-full into ffmpeg-full-amd
-cat get_ffmpeg-full_arch.tmp | sed "s@https\:\/\/aur.archlinux.org\/ffmpeg-full.git@https\:\/\/aur.archlinux.org\/ffmpeg-amd-full-git.git@g" | sed "s@aur_ffdep='htt@# aur_ffdep='htt@g" | sed "s@make_and_install_intel_md@# make_and_install_intel_md@g" | sed "s@# make_and_install_intel_md(@make_and_install_intel_md(@g" | sed "s@ffmpeg-full\/@ffmpeg-amd-full-git\/@g" >get_ffmpeg-full_arch.
+#cat get_ffmpeg-full_arch | sed 's/#cat sfslib/cat sfslib/g' | sed "s@ffmpeg-full@ffmpeg-amd-full-git@g" >get_ffmpeg-full_arch.
 
 ## get sfslib
 if [ ! -f sfslib ]; then
@@ -93,7 +90,8 @@ Build process interrupted'
     exit 1
 fi
 ## fix tensorflow include dir
-./sfslib adnlalwp 'get_ffmpeg-full_arch.' 'ffmpeg-amd-full-git.git' "../sfslib adnlalwp 'ffmpeg-amd-full-git/PKGBUILD' 'Running ffmpeg configure script...' '_cflags+=-I/usr/include/tensorflow'"
+./sfslib adnlalwp 'get_ffmpeg-full_arch.' 'cat<<EOEFF>runpatch' "./sfslib adnlalwp 'ffmpeg-amd-full-git/PKGBUILD' 'Running ffmpeg configure script...' '_cflags+=-I/usr/include/tensorflow'"
+./sfslib adnlalwp 'get_ffmpeg-full_arch.' 'cat<<EOEFF>runpatch' '## crutch to fix tensorflow include dir'
 
 chown $who get_ffmpeg-full_arch.
 chmod +x get_ffmpeg-full_arch.
@@ -129,6 +127,7 @@ sudo umount processdir
 # "
 # exit 1
 # fi
+
 cp -f upper/build/build.log build.log
 echo clear build
 sudo rm -fr processdir work upper/build upper/tmp upper/root upper/var upper/home upper/etc/sudoers
@@ -192,9 +191,17 @@ install -m755 $prefix''$j $pkgdir/usr/bin/$prefix''$j
 EOf
 
 makepkg
-if (ls | grep -q pkg.tar.xz); then
-echo "because buildfail detection gives false positive result, it was turned off
 
+rm -fr pkg src
+
+if $(cat build.log | grep -v --regexp="failed retrieving file" | grep -iq --regexp="error: "); then
+    echo "
+    It seems some errors happens. Package may be incomplete. Check build.log
+    "
+fi
+
+if (ls | grep -q pkg.tar.xz); then
+echo "
 the package is
 '$(ls | grep pkg.tar.xz)'
                                             do not forget to install it
@@ -202,6 +209,6 @@ This may work on system where it was built, other systems are questionable
 new commands are: $prefix""ffmpeg , $prefix""ffplay , $prefix""ffprobe
 "
 else echo "
-It seems something goes wrong... final package was not build
+Something goes wrong... final package was not built
 "
 fi
