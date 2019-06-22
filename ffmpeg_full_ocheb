@@ -170,10 +170,14 @@ makepkg
 
 rm -fr pkg src
 
+if $(cat build.log | grep -v --regexp="failed retrieving file" | grep -iq --regexp="error: "); then
+    echo "
+    It seems some errors happens. Package may be incomplete. Check build.log
+    "
+fi
+
 if (ls | grep -q pkg.tar.xz); then
 echo "
-because buildfail detection gives false positive result, it was turned off
-
 the package is
 '$(ls | grep pkg.tar.xz)'
                                             do not forget to install it
@@ -181,6 +185,6 @@ This may work on system where it was built, other systems are questionable
 new commands are: $prefix""ffmpeg , $prefix""ffplay , $prefix""ffprobe
 "
 else echo "
-It seems something goes wrong... final package was not built
+Something goes wrong... final package was not built
 "
 fi
