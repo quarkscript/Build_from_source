@@ -1,16 +1,16 @@
 #!/bin/bash
 ## Arch linux packages system is required, overlay filesystem support is required too.
 ## Author Andrew S    License for this script itself is GPL
-## License for rezult depends of components that are nonfree
+## License for result depends on components, some of them are nonfree
 ## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
 ## https://github.com/quarkscript/Build_from_source
 echo "
         This script is try to build ffmpeg-full in overlayed chrooted environment,
 as a result all downloaded and builded components (except already installed on system) will be 
 included to final package. It is better to install specific drivers and software before run,
-like nvidia-dkms cuda gcc and so on. This script utilize arch linux packages system, and it uses 
-3rd party PKGBUILDs from AUR for required components and for ffmpeg-full...
-Final license of rezulted package is complex and nonfree.
+like nvidia-dkms intel-media-driver cuda gcc and so on. This script utilize arch linux packages
+system, and it uses 3rd party PKGBUILDs from AUR for required components and for ffmpeg-full...
+Final license of resulted package is complex and nonfree.
         
 Build process is not fully automatic, your presence is required (for a sudo privileges)
 "
@@ -65,9 +65,9 @@ exit 1
 fi
 
 ## extra optimizations off
-#cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' | sed 's/#echo /echo /g' >get_ffmpeg-full_arch.
+cat get_ffmpeg-full_arch | sed 's/#cat sfslib/cat sfslib/g' | sed 's/#echo /echo /g' >get_ffmpeg-full_arch.
 ## extra optimizations on
-cat get_ffmpeg-full_arch | sed 's/sudo pacman/yes | sudo pacman/g' >get_ffmpeg-full_arch.
+#cat get_ffmpeg-full_arch | sed 's/#cat sfslib/cat sfslib/g' >get_ffmpeg-full_arch.
 
 chown $who get_ffmpeg-full_arch.
 chmod +x get_ffmpeg-full_arch.

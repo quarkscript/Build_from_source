@@ -1,0 +1,51 @@
+#!/bin/bash
+## Semi-automatic script to download build and install ffmpeg-full on arch linux
+## Req.: grep hash head tail wc git wget make gcc... Use: ./get_ffmpeg-full_arch
+## Author Andrew S. Licence GPL
+## https://github.com/quarkscript/Build_from_source
+## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
+
+
+if [ ! -f sfslib ]; then
+## get required Simple_func_scripts from github source
+wget https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib
+fi
+if [ ! -f sfslib ]; then
+## get required Simple_func_scripts from gitlab source
+wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_builds_scripts/sfslib
+fi
+
+## patch sfslib to make no asks, required for ocheb-builds
+#cat sfslib | sed 's/sudo pacman/yes | sudo pacman/g' >sfslib. ; mv -f sfslib. sfslib
+
+chmod +x sfslib
+if [ ! -x sfslib ]; then
+    echo '
+There is some problem of getting required sfslib
+you may download it manually from one of sourses:
+https://github.com/quarkscript/Build_from_source
+https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
+Build process interrupted'
+    exit 1
+fi
+./sfslib cxx_flags
+
+## For make a local hardware independent builds uncomment next line
+#echo "">cxxflags.txt
+
+tmptratata='$(pacman -Qqe | grep -xq chromaprint)'
+cat<<EOEFF>runpatch
+## switch to chromaprint if chromaprint-fftw isn't option
+if  $tmptratata; then
+    ./sfslib mcolif 'ffmpeg-full/PKGBUILD' 'chromaprint-fftw' 'chromaprint-fftw' 'chromaprint'
+fi
+EOEFF
+chmod +x runpatch
+
+./sfslib aurget ffmpeg-full '' "./runpatch"
+
+## as intelmedia propose
+if ( $(lspci | grep VGA | grep Intel -q) ); then
+    cat /etc/profile.d/intel-media.sh | sed -e 's/#export LIBVA_DRIVER_NAME=iHD/export LIBVA_DRIVER_NAME=iHD/g'>intel-media.sh
+    sudo mv -f intel-media.sh /etc/profile.d/intel-media.sh
+fi
