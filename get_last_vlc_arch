@@ -1,0 +1,49 @@
+#!/bin/bash
+## Semi-automatic script to download build and install vlc-git on arch linux
+## Req.: grep hash head tail wc git wget make gcc... Use: ./get_last_vlc_arch
+## Author Andrew S. Licence GPL
+## https://github.com/quarkscript/Build_from_source
+## https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
+
+if [ ! -f sfslib ]; then
+## get required Simple_func_scripts from github source
+wget https://raw.githubusercontent.com/quarkscript/Simple_func_scripts/master/sfslib
+fi
+if [ ! -f sfslib ]; then
+## get required Simple_func_scripts from gitlab source
+wget https://gitlab.com/quarkscript/arch_linux_scripts/raw/master/pkgs_builds_scripts/sfslib
+fi
+
+chmod +x sfslib
+if [ ! -x sfslib ]; then
+    echo '
+There is some problem of getting required sfslib
+you may download it manually from one of sourses:
+https://github.com/quarkscript/Build_from_source
+https://gitlab.com/quarkscript/arch_linux_scripts/tree/master/pkgs_builds_scripts
+Build process interrupted'
+    exit 1
+fi
+./sfslib cxx_flags
+
+## For make a local hardware independent builds uncomment next line
+#echo "">cxxflags.txt
+
+tmptratata0='$(pacman -Qq | grep -xq ffmpeg-full)'
+tmptratata='$(pacman -Qqe | grep -xq chromaprint)'
+cat<<EOEFF>runpatch
+## mod deps if ffmpeg-full installed
+if  $tmptratata0; then
+    ./sfslib mcolif 'vlc-git/PKGBUILD' 'ffmpeg' 'ffmpeg' 'ffmpeg-full'
+fi
+## mod deps if chromaprint installed
+if  $tmptratata; then
+    ./sfslib mcolif 'vlc-git/PKGBUILD' 'chromaprint-fftw' 'chromaprint-fftw' 'chromaprint'
+    ./sfslib rmls 'vlc-git/PKGBUILD' 'enable-chromaprint-fftw'
+fi
+EOEFF
+chmod +x runpatch
+
+## make vlc
+./sfslib aurget vlc-git '' "./runpatch"
+
