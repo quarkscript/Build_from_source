@@ -33,16 +33,31 @@ fi
 ## For make a local hardware independent builds uncomment next line
 #echo "">cxxflags.txt
 
-tmptratata='$(pacman -Qqe | grep -xq chromaprint)'
-cat<<EOEFF>runpatch
-## switch to chromaprint if chromaprint-fftw isn't option
-if  $tmptratata; then
-    ./sfslib mcolif 'ffmpeg-full/PKGBUILD' 'chromaprint-fftw' 'chromaprint-fftw' 'chromaprint'
+## modding conditions, it cannot be written directly because in that case it will exec before writed
+mod_condition_0='$(find -maxdepth 1 -type d | grep ffmpeg-full -q)'
+mod_condition_1='$(pacman -Qqe | grep -xq chromaprint)'
+## modscript
+cat<<EOEFF>modscript
+#!/bin/bash
+## global mod for all aur-packages
+
+## local mods for specified aur-packages
+## mod ffmpeg-full PKGBUILD
+if $mod_condition_0; then
+    ## switch from chromaprint-fftw to chromaprint if it already installed
+    if  $mod_condition_1; then
+        ./sfslib mcolif 'ffmpeg-full/PKGBUILD' 'chromaprint-fftw' 'chromaprint-fftw' 'chromaprint'
+    fi
 fi
 EOEFF
-chmod +x runpatch
+chmod +x modscript
 
-./sfslib aurget ffmpeg-full '' "./runpatch"
+## by default aurget tries to remove sha and pgp checks in all used PKGBUILDs
+## it lower security but in same time it lower build fail probability
+## if you want more secure and you are sure that all used PKGBUILDs updated 
+## to its appropriate sourcecode then use nonempty use_checks variable
+use_checks=''
+./sfslib aurget ffmpeg-full '' "./modscript" "$use_checks"
 
 ## as intelmedia propose
 if ( $(lspci | grep VGA | grep Intel -q) ); then

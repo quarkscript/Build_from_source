@@ -77,6 +77,14 @@ EOf
 chmod +x upper/build/runscript
 echo !!! superuser password is required for mount overlay folder and chroot it
 sudo mount -t overlay overlay -o,lowerdir=/,upperdir=upper,workdir=work processdir
+## additional check of mounted overlay
+## continue without overlay may harm your system
+if ! $(mount | grep overlay | grep processdir -q); then
+    echo '
+Something wrong with mounting overlayfs
+Process interrupted...'
+    exit 1
+fi
 sudo mount --bind /proc processdir/proc
 sudo mount --bind /dev processdir/dev
 sudo mount --bind /sys processdir/sys
@@ -170,16 +178,14 @@ makepkg
 
 rm -fr pkg src
 
-if $(cat build.log | grep -v --regexp="failed retrieving file" | grep -iq --regexp="error: "); then
-    echo "
-    It seems some errors happens. Package may be incomplete. Check build.log
-    "
+if $(cat build.log | grep -v --regexp="failed retrieving file" | grep -iq --regexp="error: "); then echo "
+    It seems some errors happens. Package may be incomplete. Check build.log for 'error: '"
 fi
 
-if (ls | grep -q pkg.tar.xz); then
+if (ls | grep $pkgname | grep -q pkg.tar.xz); then
 echo "
 the package is
-'$(ls | grep pkg.tar.xz)'
+'$(ls | grep $pkgname | grep pkg.tar.xz)'
                                             do not forget to install it
 This may work on system where it was built, other systems are questionable
 new commands are: $prefix""ffmpeg , $prefix""ffplay , $prefix""ffprobe
